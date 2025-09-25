@@ -9,6 +9,7 @@ import Login from "./pages/Login";
 import SignUp from "./pages/SignUp";
 import { RoleRouter } from "@/components/RoleRouter";
 import Tracker from "./pages/Tracker";
+import BrowseResources from "./pages/BrowseResources";
 import { InspirationalVerses } from "./components/insepri";
 
 const queryClient = new QueryClient();
@@ -24,6 +25,7 @@ const App = () => (
           <Route path="/signup" element={<SignUp />} />
           <Route path="/dashboard" element={<RoleRouter />} />
           <Route path="/tracker" element={<Tracker />} />
+          <Route path="/browse-resources" element={<BrowseResources />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
           <Route path="/ins" element={<InspirationalVerses />} />

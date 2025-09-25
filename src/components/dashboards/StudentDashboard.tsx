@@ -229,7 +229,11 @@ export const StudentDashboard = () => {
                   </div>
                 </div>
               </Button>
-              <Button variant="outline" className="h-20 justify-start border-2 border-purple-300 bg-gradient-to-r from-purple-50 to-pink-50 hover:border-purple-500 hover:bg-gradient-to-r hover:from-purple-100 hover:to-pink-100 hover:text-purple-700 transition-all duration-300 transform hover:-translate-y-2 hover:scale-105 relative overflow-hidden group">
+              <Button 
+                onClick={() => navigate('/browse-resources')}
+                variant="outline" 
+                className="h-20 justify-start border-2 border-purple-300 bg-gradient-to-r from-purple-50 to-pink-50 hover:border-purple-500 hover:bg-gradient-to-r hover:from-purple-100 hover:to-pink-100 hover:text-purple-700 transition-all duration-300 transform hover:-translate-y-2 hover:scale-105 relative overflow-hidden group"
+              >
                 <div className="absolute inset-0 bg-gradient-to-r from-purple-100/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                 <div className="relative z-10 flex items-center gap-4">
                   <div className="w-12 h-12 bg-gradient-to-r from-purple-500 to-pink-500 rounded-xl flex items-center justify-center">
