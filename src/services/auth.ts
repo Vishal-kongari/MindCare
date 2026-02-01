@@ -11,10 +11,17 @@ export interface AppUser {
   name: string;
 }
 
-export const fetchRole = async (uid: string): Promise<AppRole> => {
+export const fetchRole = async (uid: string): Promise<{ role: AppRole, name: string }> => {
   const db = await getDb();
   const snap = await getDoc(doc(db, 'users', uid));
-  return (snap.exists() ? (snap.data().role as AppRole) : 'student');
+  if (snap.exists()) {
+    const data = snap.data();
+    return {
+      role: (data.role as AppRole) || 'student',
+      name: data.name || ''
+    };
+  }
+  return { role: 'student', name: '' };
 };
 
 export const ensureProfile = async (uid: string, email: string, role: AppRole, name: string, phoneNumber?: string) => {
@@ -29,17 +36,22 @@ export const ensureProfile = async (uid: string, email: string, role: AppRole, n
 export const signInEmail = async (email: string, password: string): Promise<AppUser> => {
   const auth = await getAuthInstance();
   const cred = await signInWithEmailAndPassword(auth, email, password);
-  const role = await fetchRole(cred.user.uid);
-  const name = (cred.user.email || email).split('@')[0];
-  return { id: cred.user.uid, email: cred.user.email || email, role, name };
+  const { role, name } = await fetchRole(cred.user.uid);
+  const finalName = name || (cred.user.email || email).split('@')[0];
+  return { id: cred.user.uid, email: cred.user.email || email, role, name: finalName };
 };
 
 export const signUpEmail = async (email: string, password: string, role: AppRole, displayName?: string, phoneNumber?: string): Promise<AppUser> => {
-  const auth = await getAuthInstance();
-  const cred = await createUserWithEmailAndPassword(auth, email, password);
-  const name = (displayName && displayName.trim()) ? displayName.trim() : email.split('@')[0];
-  await ensureProfile(cred.user.uid, email, role, name, phoneNumber);
-  return { id: cred.user.uid, email, role, name };
+  try {
+    const auth = await getAuthInstance();
+    const cred = await createUserWithEmailAndPassword(auth, email, password);
+    const name = (displayName && displayName.trim()) ? displayName.trim() : email.split('@')[0];
+    await ensureProfile(cred.user.uid, email, role, name, phoneNumber);
+    return { id: cred.user.uid, email, role, name };
+  } catch (error: any) {
+    console.error("SignUp Error Details:", error);
+    throw error;
+  }
 };
 
 export const signOutUser = async () => {
@@ -51,9 +63,14 @@ export const listenAuth = (cb: (user: AppUser | null) => void) => {
   getAuthInstance().then((auth) => {
     onAuthStateChanged(auth, async (u) => {
       if (!u) return cb(null);
-      const role = await fetchRole(u.uid);
+      const { role, name: firestoreName } = await fetchRole(u.uid);
       const email = u.email || '';
-      const name = email.split('@')[0];
+      const name = firestoreName || email.split('@')[0];
+      // Sync local storage
+      const { setName, setRole } = await import("@/lib/auth");
+      setName(name);
+      setRole(role);
+
       cb({ id: u.uid, email, role, name });
     });
   });

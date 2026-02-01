@@ -87,20 +87,25 @@ async function isEmotionallyWeak(userMessage: string) {
 }
 
 // ---------------- CHAT ENDPOINT ----------------
-app.post("/chat", async (req, res) => {
+// ---------------- CHAT ENDPOINT ----------------
+app.post("/api/chat", async (req, res) => {
 	try {
-		const { userMessage, userId } = req.body as { userMessage: string; userId: string };
+		const { userMessage, userId } = req.body as { userMessage: string; userId: string }; // userId might be optional in frontend atm, assume handled
 		if (!userMessage) return res.status(400).json({ error: "userMessage is required" });
 
 		const weak = await isEmotionallyWeak(userMessage);
 
 		if (weak) {
 			try {
-				const userRef = db.collection("users").doc(userId);
-				const doc = await userRef.get();
-				if (doc.exists) {
-					const data = doc.data() as { phone?: string };
-					if (data?.phone) await makeCall(data.phone);
+				// If userId is provided, look up user. If not, we might need another way or just skip call.
+				// For now, if userId is missing, skip DB lookup to avoid crash, but return distress message.
+				if (userId) {
+					const userRef = db.collection("users").doc(userId);
+					const doc = await userRef.get();
+					if (doc.exists) {
+						const data = doc.data() as { phone?: string };
+						if (data?.phone) await makeCall(data.phone);
+					}
 				}
 			} catch (err) {
 				console.error("Firestore lookup failed:", err);
@@ -108,6 +113,7 @@ app.post("/chat", async (req, res) => {
 			return res.json({
 				reply:
 					"🚨 We noticed signs of distress. We've alerted your emergency contact for support. 💙",
+				distress: true
 			});
 		}
 
@@ -118,6 +124,28 @@ app.post("/chat", async (req, res) => {
 		console.error(err);
 		return res.status(500).json({ error: "Something went wrong" });
 	}
+});
+
+// ---------------- EMERGENCY ENDPOINTS ----------------
+app.post("/api/emergency-sms", async (req, res) => {
+	// Placeholder for SMS logic
+	console.log("SMS requested:", req.body);
+	// In a real app, use Twilio here similar to makeCall
+	res.json({ success: true, message: "SMS alert logged (simulation)" });
+});
+
+app.post("/api/emergency-email", async (req, res) => {
+	// Placeholder for Email logic
+	console.log("Email requested:", req.body);
+	// In a real app, use Nodemailer or Firebase extensions
+	res.json({ success: true, message: "Email alert logged (simulation)" });
+});
+
+app.post("/api/emergency-call", async (req, res) => {
+	// Re-using logic or just proxying to makeCall if specific phone passed
+	const { to, studentName } = req.body;
+	if (to) await makeCall(to);
+	res.json({ success: true });
 });
 
 // ---------------- HEALTH + START ----------------

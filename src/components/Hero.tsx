@@ -3,8 +3,10 @@ import { Button } from "@/components/ui/button";
 import { ArrowRight, Shield, Users, Clock, Sparkles, Heart, Star, ChevronRight } from "lucide-react";
 import { Link } from "react-router-dom";
 import defaultHero from "@/assets/Screenshot 2025-09-20 112724.png";
+import { useTranslation } from "react-i18next";
 
 export const Hero = () => {
+  const { t } = useTranslation();
   const [bgSrc, setBgSrc] = useState<string>("/landing-bg.jpg");
 
   return (
@@ -30,22 +32,20 @@ export const Hero = () => {
             {/* Badge */}
             <div className="mb-8 inline-flex items-center rounded-full bg-white/80 backdrop-blur-sm px-4 py-2 text-sm font-semibold text-blue-600 shadow-lg border border-blue-100">
               <Sparkles className="h-4 w-4 mr-2" />
-              Trusted by Students
+              {t('hero.badge')}
             </div>
 
             {/* Main Heading */}
             <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-gray-900 mb-6 leading-tight">
-              Mental Wellness
+              {t('hero.title')}
               <span className="block bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 bg-clip-text text-transparent mt-2">
-                Made Accessible
+                {t('hero.titleHigh')}
               </span>
             </h1>
 
             {/* Subtitle */}
             <p className="text-lg md:text-xl text-gray-700 mb-10 leading-relaxed max-w-2xl mx-auto lg:mx-0">
-              Break free from stigma and access personalized mental health support.
-              Our AI-powered platform connects you with professional counselors,
-              peer communities, and evidence-based resources designed for student life.
+              {t('hero.subtitle')}
             </p>
 
             {/* CTA Buttons */}
@@ -56,7 +56,7 @@ export const Hero = () => {
                 className="group bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-8 py-6 text-base font-semibold shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1 rounded-2xl"
               >
                 <Link to="/signup" className="flex items-center">
-                  Start Your Journey
+                  {t('hero.ctaPrimary')}
                   <ArrowRight className="h-5 w-5 ml-2 group-hover:translate-x-1 transition-transform" />
                 </Link>
               </Button>
@@ -66,7 +66,7 @@ export const Hero = () => {
                 className="border-2 border-gray-300 hover:border-blue-500 hover:bg-blue-50 px-8 py-6 text-base font-semibold transition-all duration-300 rounded-2xl group"
               >
                 <span className="flex items-center">
-                  Watch Demo
+                  {t('hero.ctaSecondary')}
                   <ChevronRight className="h-4 w-4 ml-1 group-hover:translate-x-1 transition-transform" />
                 </span>
               </Button>
@@ -79,8 +79,8 @@ export const Hero = () => {
                   <Shield className="h-6 w-6 text-blue-600" />
                 </div>
                 <div className="text-left">
-                  <h3 className="font-semibold text-gray-900">100% Anonymous</h3>
-                  <p className="text-sm text-gray-600">Your privacy protected</p>
+                  <h3 className="font-semibold text-gray-900">{t('hero.stats.anonymous')}</h3>
+                  <p className="text-sm text-gray-600">{t('hero.stats.anonymousDesc')}</p>
                 </div>
               </div>
               <div className="flex items-center gap-3 p-4 bg-white/70 backdrop-blur-sm rounded-2xl shadow-sm hover:shadow-md transition-shadow">
@@ -88,8 +88,8 @@ export const Hero = () => {
                   <Clock className="h-6 w-6 text-green-600" />
                 </div>
                 <div className="text-left">
-                  <h3 className="font-semibold text-gray-900">24/7 Support</h3>
-                  <p className="text-sm text-gray-600">Always available</p>
+                  <h3 className="font-semibold text-gray-900">{t('hero.stats.support')}</h3>
+                  <p className="text-sm text-gray-600">{t('hero.stats.supportDesc')}</p>
                 </div>
               </div>
               <div className="flex items-center gap-3 p-4 bg-white/70 backdrop-blur-sm rounded-2xl shadow-sm hover:shadow-md transition-shadow">
@@ -97,8 +97,8 @@ export const Hero = () => {
                   <Users className="h-6 w-6 text-purple-600" />
                 </div>
                 <div className="text-left">
-                  <h3 className="font-semibold text-gray-900">Peer Community</h3>
-                  <p className="text-sm text-gray-600">Connect with peers</p>
+                  <h3 className="font-semibold text-gray-900">{t('hero.stats.community')}</h3>
+                  <p className="text-sm text-gray-600">{t('hero.stats.communityDesc')}</p>
                 </div>
               </div>
             </div>
@@ -164,7 +164,7 @@ export const Hero = () => {
       </div>
 
       {/* Custom Animations */}
-      <style jsx>{`
+      <style>{`
         @keyframes float {
           0%, 100% { transform: translateY(0) rotate(0deg); }
           50% { transform: translateY(-10px) rotate(2deg); }

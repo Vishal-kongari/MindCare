@@ -7,8 +7,10 @@ import { Users, Calendar, MessageSquare, Heart, TrendingUp, CheckCircle2, AlertT
 import { FaHeart, FaUsers, FaCalendarAlt, FaComments, FaChartLine, FaCheckCircle, FaExclamationTriangle, FaClock, FaStethoscope, FaUserMd, FaClipboardList, FaTasks, FaStar, FaTrophy, FaBrain, FaHandsHelping, FaShieldAlt, FaMagic, FaGem, FaCrown, FaAward, FaMedal, FaRocket, FaLightbulb, FaInfinity, FaRainbow, FaPalette } from "react-icons/fa";
 import { GiMedicalPack, GiHeartWings, GiPeaceDove, GiLotus, GiYinYang, GiCrystalBall, GiMagicSwirl, GiStarFormation, GiFlowerPot, GiButterfly, GiTreeBranch, GiWaterDrop, GiSunrise, GiSunset, GiMeditation } from "react-icons/gi";
 import { MdPsychology, MdHealing, MdFavorite, MdEmojiNature, MdAutoAwesome, MdTrendingUp, MdInsights, MdExplore, MdCelebration, MdLocalFlorist, MdWbSunny, MdNightlight, MdSelfImprovement, MdNature, MdSpa, MdHealthAndSafety, MdSupportAgent, MdVerifiedUser, MdThumbUp, MdEmojiEvents, MdGrade, MdWorkspacePremium } from "react-icons/md";
+import { useTranslation } from "react-i18next";
 import { useEffect, useState } from "react";
 import { acceptBooking, getUserProfileById, listenBookingsForCounselor, rejectBooking, completeSession, debugCounselorBookings, fixCounselorIdMismatch, createTestBooking, assignPendingBookingsToCounselor, type Booking } from "@/services/bookings";
+import { debugGlobalBookings } from "@/lib/debugBookings";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -17,6 +19,7 @@ import { testFirebaseConnection } from "@/lib/firebaseTest";
 import { getAuthInstance } from "@/lib/firebase";
 
 export const CounselorDashboard = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const name = getName();
   const [bookings, setBookings] = useState<Booking[]>([]);
@@ -39,8 +42,11 @@ export const CounselorDashboard = () => {
         setError(null);
         console.log('Setting up Firebase listener for counselor bookings...');
 
+        console.log('CounselorDashboard: Current User ID:', getAuthInstance().then(auth => console.log('Auth User:', auth.currentUser?.uid)));
+
         unsub = await listenBookingsForCounselor((list) => {
-          console.log('Received bookings from Firebase:', list);
+          console.log('CounselorDashboard: Received bookings from service:', list);
+          console.log('CounselorDashboard: Booking Counselor IDs:', list.map(b => b.counselorId));
           setBookings(list);
           setLoading(false);
 
@@ -108,9 +114,7 @@ export const CounselorDashboard = () => {
   // Filter bookings based on status and search term
   const filteredBookings = bookings.filter(booking => {
     const matchesStatus = statusFilter === "all" || booking.status === statusFilter;
-    const studentName = studentNames[booking.userId] || 'Student';
     const matchesSearch = searchTerm === "" ||
-      studentName.toLowerCase().includes(searchTerm.toLowerCase()) ||
       booking.status.toLowerCase().includes(searchTerm.toLowerCase());
     return matchesStatus && matchesSearch;
   });
@@ -233,9 +237,9 @@ export const CounselorDashboard = () => {
             </div>
             <div>
               <h1 className="text-2xl font-bold bg-gradient-to-r from-emerald-600 to-blue-600 bg-clip-text text-transparent">Dr. {name}</h1>
-              <p className="text-sm text-gray-600 flex items-center gap-1">
+              <div className="text-sm text-gray-600 flex items-center gap-1">
                 <MdPsychology className="w-4 h-4 text-emerald-500" />
-                Counselor Dashboard
+                {t('dashboard.counselor.title')}
                 {!loading && !error && (
                   <span className="ml-2 inline-flex items-center gap-1 text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">
                     <div className="w-2 h-2 bg-green-500 rounded-full"></div>
@@ -248,50 +252,11 @@ export const CounselorDashboard = () => {
                     Disconnected
                   </span>
                 )}
-              </p>
+              </div>
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleTestConnection}
-              className="border-blue-300 hover:border-blue-500 hover:bg-blue-50 hover:text-blue-600 transition-colors"
-            >
-              Test DB
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={debugCounselorBookings}
-              className="border-purple-300 hover:border-purple-500 hover:bg-purple-50 hover:text-purple-600 transition-colors"
-            >
-              Debug
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={fixCounselorIdMismatch}
-              className="border-orange-300 hover:border-orange-500 hover:bg-orange-50 hover:text-orange-600 transition-colors"
-            >
-              Fix IDs
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleCreateTestBooking}
-              className="border-green-300 hover:border-green-500 hover:bg-green-50 hover:text-green-600 transition-colors"
-            >
-              Test Booking
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleAssignPendingBookings}
-              className="border-blue-300 hover:border-blue-500 hover:bg-blue-50 hover:text-blue-600 transition-colors"
-            >
-              Assign Bookings
-            </Button>
+
             <Button
               variant="outline"
               onClick={async () => { await signOutUser(); clearAuth(); navigate('/'); }}
@@ -310,7 +275,7 @@ export const CounselorDashboard = () => {
               <div className="w-12 h-12 bg-gradient-to-br from-emerald-500 via-teal-500 to-blue-500 rounded-xl flex items-center justify-center shadow-lg transform hover:scale-105 transition-transform duration-300">
                 <FaCalendarAlt className="w-6 h-6 text-white" />
               </div>
-              <span className="bg-gradient-to-r from-emerald-600 to-blue-600 bg-clip-text text-transparent">All Bookings</span>
+              <span className="bg-gradient-to-r from-emerald-600 to-blue-600 bg-clip-text text-transparent">{t('dashboard.counselor.all_bookings')}</span>
             </CardTitle>
             <div className="flex flex-col sm:flex-row gap-3 mt-4">
               <div className="flex-1">
@@ -415,7 +380,7 @@ export const CounselorDashboard = () => {
                       </div>
                       <div className="flex-1">
                         <div className="flex items-center gap-2 mb-1">
-                          <p className="font-semibold text-gray-900">{studentNames[b.userId] || 'Student'}</p>
+                          <p className="font-semibold text-gray-900">Anonymous Student</p>
                           <Badge variant={getStatusBadgeVariant(b.status)} className="text-xs">
                             {getStatusIcon(b.status)}
                             <span className="ml-1 capitalize">{b.status}</span>
@@ -626,7 +591,7 @@ export const CounselorDashboard = () => {
               <div className="w-10 h-10 bg-gradient-to-br from-blue-500 via-cyan-500 to-teal-500 rounded-xl flex items-center justify-center shadow-lg">
                 <FaUsers className="w-5 h-5 text-white" />
               </div>
-              <span className="bg-gradient-to-r from-blue-600 to-teal-600 bg-clip-text text-transparent">Active Students</span>
+              <span className="bg-gradient-to-r from-blue-600 to-teal-600 bg-clip-text text-transparent">{t('dashboard.counselor.active_students')}</span>
             </CardTitle>
           </CardHeader>
           <CardContent className="relative z-10 text-center">
@@ -649,7 +614,7 @@ export const CounselorDashboard = () => {
               <div className="w-10 h-10 bg-gradient-to-br from-green-500 via-emerald-500 to-teal-500 rounded-xl flex items-center justify-center shadow-lg">
                 <FaChartLine className="w-5 h-5 text-white" />
               </div>
-              <span className="bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent">KPIs</span>
+              <span className="bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent">{t('dashboard.counselor.kpi')}</span>
             </CardTitle>
           </CardHeader>
           <CardContent className="relative z-10 grid grid-cols-2 gap-4">
@@ -672,7 +637,7 @@ export const CounselorDashboard = () => {
         <Card className="md:col-span-3 border-0 shadow-large bg-card/70 backdrop-blur">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <MessageSquare className="w-5 h-5 text-accent" /> Recent Messages
+              <MessageSquare className="w-5 h-5 text-accent" /> {t('dashboard.counselor.recent_messages')}
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
@@ -684,7 +649,7 @@ export const CounselorDashboard = () => {
         <Card className="md:col-span-3 border-0 shadow-large bg-card/70 backdrop-blur">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <Users className="w-5 h-5 text-secondary" /> Caseload Snapshot
+              <Users className="w-5 h-5 text-secondary" /> {t('dashboard.counselor.caseload')}
             </CardTitle>
           </CardHeader>
           <CardContent className="grid sm:grid-cols-4 gap-4">
@@ -697,7 +662,7 @@ export const CounselorDashboard = () => {
         <Card className="md:col-span-3 border-0 shadow-large bg-card/70 backdrop-blur">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <CheckCircle2 className="w-5 h-5 text-primary" /> Today’s Tasks
+              <CheckCircle2 className="w-5 h-5 text-primary" /> {t('dashboard.counselor.tasks')}
             </CardTitle>
           </CardHeader>
           <CardContent className="grid sm:grid-cols-3 gap-4">

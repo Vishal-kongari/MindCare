@@ -2,8 +2,11 @@ import { Button } from "@/components/ui/button";
 import { MessageCircle, BookOpen, Calendar, Users, Menu, Heart, X } from "lucide-react";
 import { useState } from "react";
 import { Link } from "react-router-dom";
+import { LanguageSwitcher } from "./LanguageSwitcher";
+import { useTranslation } from "react-i18next";
 
 export const Header = () => {
+  const { t } = useTranslation();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   return (
@@ -25,25 +28,25 @@ export const Header = () => {
           <Button asChild variant="ghost" size="sm" className="text-gray-700 hover:text-blue-600 hover:bg-blue-50 transition-colors">
             <Link to="/login">
               <MessageCircle className="h-4 w-4 mr-2" />
-              Chat Support
+              {t('nav.chat')}
             </Link>
           </Button>
           <Button asChild variant="ghost" size="sm" className="text-gray-700 hover:text-blue-600 hover:bg-blue-50 transition-colors">
             <Link to="/login">
               <BookOpen className="h-4 w-4 mr-2" />
-              Resources
+              {t('nav.resources')}
             </Link>
           </Button>
           <Button asChild variant="ghost" size="sm" className="text-gray-700 hover:text-blue-600 hover:bg-blue-50 transition-colors">
             <Link to="/login">
               <Calendar className="h-4 w-4 mr-2" />
-              Book Session
+              {t('nav.book')}
             </Link>
           </Button>
           <Button asChild variant="ghost" size="sm" className="text-gray-700 hover:text-blue-600 hover:bg-blue-50 transition-colors">
             <Link to="/login">
               <Users className="h-4 w-4 mr-2" />
-              Community
+              {t('nav.community')}
             </Link>
           </Button>
         </nav>
@@ -51,11 +54,12 @@ export const Header = () => {
         {/* CTA Buttons */}
         <div className="hidden md:flex items-center space-x-4">
           <Button asChild variant="outline" size="sm" className="border-gray-300 hover:border-blue-500 hover:bg-blue-50 transition-colors">
-            <Link to="/login">Log In</Link>
+            <Link to="/login">{t('nav.login')}</Link>
           </Button>
           <Button asChild size="sm" className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white shadow-lg hover:shadow-xl transition-all">
-            <Link to="/signup">Get Started</Link>
+            <Link to="/signup">{t('nav.signup')}</Link>
           </Button>
+          <LanguageSwitcher />
         </div>
 
         {/* Mobile Menu Button */}

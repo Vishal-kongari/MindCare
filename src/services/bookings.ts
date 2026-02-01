@@ -60,6 +60,7 @@ export const listCounselors = async (): Promise<CounselorProfile[]> => {
 
 export const createBooking = async (counselorId: string): Promise<string> => {
   try {
+    if (!counselorId) throw new Error('Counselor ID is required');
     console.log('Creating booking for counselor:', counselorId);
     const auth = await getAuthInstance();
     const user = auth.currentUser;
@@ -79,7 +80,7 @@ export const createBooking = async (counselorId: string): Promise<string> => {
       status: 'pending',
       createdAt: serverTimestamp(),
       isEmergency: false,
-      studentName: studentProfile?.name || 'Student',
+      studentName: 'Anonymous Student',
     };
 
     console.log('Booking data:', {
@@ -121,81 +122,37 @@ export const listenBookingsForCounselor = async (
     console.log('Setting up counselor booking listener for user:', user.uid);
     const db = await getDb();
 
-    // First, try the ordered query (requires index)
-    const tryOrderedQuery = async () => {
-      try {
-        const orderedQuery = query(
-          collection(db, 'bookings'),
-          where('counselorId', '==', user.uid),
-          orderBy('createdAt', 'desc')
-        );
+    // Use unordered query with client-side sorting to avoid index issues ("failed-precondition")
+    // This is safer for prototyping and small datasets
+    const q = query(
+      collection(db, 'bookings'),
+      where('counselorId', '==', user.uid)
+    );
 
-        return onSnapshot(orderedQuery,
-          (snapshot) => {
-            const bookings = snapshot.docs.map(doc => ({
-              id: doc.id,
-              ...doc.data()
-            })) as Booking[];
+    const unsubscribe = onSnapshot(q,
+      (snapshot) => {
+        const bookings = snapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data()
+        })) as Booking[];
 
-            console.log(`✅ Ordered query: Found ${bookings.length} bookings for counselor ${user.uid}`);
-            cb(bookings);
-          },
-          (error) => {
-            if (error.code === 'failed-precondition') {
-              console.log('⚠️ Index not ready, falling back to unordered query...');
-              tryUnorderedQuery();
-            } else {
-              console.error('❌ Error in ordered query:', error);
-              cb([]);
-            }
-          }
-        );
-      } catch (error) {
-        console.error('❌ Failed to create ordered query:', error);
-        tryUnorderedQuery();
-        return () => { };
-      }
-    };
+        // Sort by createdAt desc (newest first)
+        bookings.sort((a, b) => {
+          const dateA = a.createdAt?.toDate ? a.createdAt.toDate().getTime() : (a.createdAt ? new Date(a.createdAt).getTime() : 0);
+          const dateB = b.createdAt?.toDate ? b.createdAt.toDate().getTime() : (b.createdAt ? new Date(b.createdAt).getTime() : 0);
+          return dateB - dateA;
+        });
 
-    // Fallback: unordered query with client-side sorting
-    const tryUnorderedQuery = () => {
-      try {
-        const unorderedQuery = query(
-          collection(db, 'bookings'),
-          where('counselorId', '==', user.uid)
-        );
-
-        return onSnapshot(unorderedQuery,
-          (snapshot) => {
-            const bookings = snapshot.docs.map(doc => ({
-              id: doc.id,
-              ...doc.data()
-            })) as Booking[];
-
-            // Manual sorting by createdAt
-            bookings.sort((a, b) => {
-              const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
-              const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
-              return dateB - dateA; // Descending order
-            });
-
-            console.log(`⚠️ Unordered query: Found ${bookings.length} bookings for counselor ${user.uid}`);
-            cb(bookings);
-          },
-          (error) => {
-            console.error('❌ Error in unordered query:', error);
-            cb([]);
-          }
-        );
-      } catch (error) {
-        console.error('❌ Failed to create unordered query:', error);
+        console.log(`✅ Found ${bookings.length} bookings for counselor ${user.uid}`);
+        cb(bookings);
+      },
+      (error) => {
+        console.error('❌ Error in booking listener:', error);
         cb([]);
-        return () => { };
       }
-    };
+    );
 
-    // Start with ordered query, fall back to unordered if needed
-    return tryOrderedQuery();
+    return unsubscribe;
 
   } catch (error) {
     console.error('❌ Failed to setup counselor booking listener:', error);

@@ -1,6 +1,8 @@
 import { Heart, Mail, Phone, MapPin, Facebook, Twitter, Instagram, Linkedin } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 export const Footer = () => {
+  const { t } = useTranslation();
   return (
     <footer className="bg-gradient-to-br from-gray-900 via-blue-900 to-purple-900 text-white">
       <div className="container py-16">
@@ -12,13 +14,12 @@ export const Footer = () => {
                 <Heart className="h-7 w-7 text-white" />
               </div>
               <div>
-                <span className="text-2xl font-bold">MindCare</span>
-                <p className="text-sm text-gray-300">Mental Health Support</p>
+                <span className="text-2xl font-bold">{t('footer.brand')}</span>
+                <p className="text-sm text-gray-300">{t('footer.tagline')}</p>
               </div>
             </div>
             <p className="text-gray-300 leading-relaxed mb-6">
-              Empowering students with accessible, confidential mental health support.
-              Your wellbeing is our priority.
+              {t('footer.desc')}
             </p>
             <div className="flex gap-4">
               <a href="#" className="w-10 h-10 bg-white/10 rounded-lg flex items-center justify-center hover:bg-white/20 transition-colors">
@@ -38,19 +39,19 @@ export const Footer = () => {
 
           {/* Quick Links */}
           <div>
-            <h3 className="text-lg font-semibold mb-6">Quick Links</h3>
+            <h3 className="text-lg font-semibold mb-6">{t('footer.quick')}</h3>
             <ul className="space-y-3">
-              <li><a href="#" className="text-gray-300 hover:text-white transition-colors">Chat Support</a></li>
-              <li><a href="#" className="text-gray-300 hover:text-white transition-colors">Book Session</a></li>
-              <li><a href="#" className="text-gray-300 hover:text-white transition-colors">Resources</a></li>
-              <li><a href="#" className="text-gray-300 hover:text-white transition-colors">Community</a></li>
+              <li><a href="#" className="text-gray-300 hover:text-white transition-colors">{t('nav.chat')}</a></li>
+              <li><a href="#" className="text-gray-300 hover:text-white transition-colors">{t('nav.book')}</a></li>
+              <li><a href="#" className="text-gray-300 hover:text-white transition-colors">{t('nav.resources')}</a></li>
+              <li><a href="#" className="text-gray-300 hover:text-white transition-colors">{t('nav.community')}</a></li>
               <li><a href="#" className="text-gray-300 hover:text-white transition-colors">Emergency Help</a></li>
             </ul>
           </div>
 
           {/* Support */}
           <div>
-            <h3 className="text-lg font-semibold mb-6">Support</h3>
+            <h3 className="text-lg font-semibold mb-6">{t('footer.support')}</h3>
             <ul className="space-y-3">
               <li><a href="#" className="text-gray-300 hover:text-white transition-colors">Help Center</a></li>
               <li><a href="#" className="text-gray-300 hover:text-white transition-colors">Privacy Policy</a></li>
@@ -62,7 +63,7 @@ export const Footer = () => {
 
           {/* Contact */}
           <div>
-            <h3 className="text-lg font-semibold mb-6">Contact Us</h3>
+            <h3 className="text-lg font-semibold mb-6">{t('footer.contact')}</h3>
             <div className="space-y-4">
               <div className="flex items-center gap-3">
                 <Mail className="h-5 w-5 text-blue-400" />
@@ -83,8 +84,8 @@ export const Footer = () => {
         {/* Bottom Bar */}
         <div className="pt-8 border-t border-white/10 flex flex-col md:flex-row items-center justify-between gap-4">
           <p className="text-gray-400 text-sm">
-            © {new Date().getFullYear()} MindCare. All rights reserved.
-            <span className="ml-2">Made with ❤️ for students everywhere.</span>
+            © {new Date().getFullYear()} {t('footer.brand')}. {t('footer.rights')}
+            <span className="ml-2">{t('footer.made')}</span>
           </p>
           <div className="flex gap-6 text-sm">
             <a href="#" className="text-gray-400 hover:text-white transition-colors">Privacy</a>

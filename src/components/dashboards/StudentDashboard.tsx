@@ -7,6 +7,7 @@ import { Brain, Calendar, Star, Target, MessageCircle, BookOpen, Users, Smile, M
 import { FaBrain, FaHeart, FaLeaf, FaFire, FaRocket, FaGem, FaSun, FaMoon, FaStar, FaTrophy, FaGamepad, FaBook, FaUsers, FaComments, FaCalendarAlt, FaChartLine, FaBullseye, FaLightbulb, FaMagic, FaRainbow, FaPalette, FaInfinity } from "react-icons/fa";
 import { GiMeditation, GiFlowerPot, GiButterfly, GiTreeBranch, GiWaterDrop, GiSunrise, GiSunset, GiCrystalBall, GiMagicSwirl, GiStarFormation, GiHeartWings, GiPeaceDove, GiLotus, GiYinYang } from "react-icons/gi";
 import { MdSelfImprovement, MdPsychology, MdNature, MdSpa, MdHealing, MdFavorite, MdEmojiNature, MdAutoAwesome, MdTrendingUp, MdInsights, MdExplore, MdCelebration, MdLocalFlorist, MdWbSunny, MdNightlight } from "react-icons/md";
+import { useTranslation } from "react-i18next";
 import { useEffect, useState } from "react";
 import { listCounselors, createBooking, listenBookingsForStudent, getUserProfileById, type CounselorProfile, type Booking } from "@/services/bookings";
 import PopupChat from "@/components/PopupChat";
@@ -14,6 +15,7 @@ import { testBookingFlow } from "@/lib/bookingTest";
 import { checkFirebaseConfig, getFirebaseConfigStatus } from "@/lib/firebaseConfigCheck";
 
 export const StudentDashboard = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const name = getName();
   const [bookings, setBookings] = useState<Booking[]>([]);
@@ -53,10 +55,10 @@ export const StudentDashboard = () => {
               <FaBrain className="w-7 h-7 text-white" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">Welcome back, {name}</h1>
+              <h1 className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">{t('dashboard.student.welcome')}, {name}</h1>
               <p className="text-sm text-gray-600 flex items-center gap-1">
                 <GiMeditation className="w-4 h-4 text-purple-500" />
-                Student Dashboard
+                {t('dashboard.student.title')}
                 {(() => {
                   const configStatus = getFirebaseConfigStatus();
                   return configStatus.isValid ? (
@@ -91,7 +93,7 @@ export const StudentDashboard = () => {
               <div className="w-12 h-12 bg-gradient-to-br from-purple-500 via-pink-500 to-blue-500 rounded-xl flex items-center justify-center shadow-lg transform hover:scale-105 transition-transform duration-300">
                 <FaBullseye className="w-6 h-6 text-white" />
               </div>
-              <span className="bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">Weekly Goals</span>
+              <span className="bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">{t('dashboard.student.goals.title')}</span>
             </CardTitle>
           </CardHeader>
           <CardContent className="relative z-10">
@@ -101,7 +103,7 @@ export const StudentDashboard = () => {
                 <div className="relative z-10">
                   <div className="flex items-center gap-2 mb-3">
                     <GiMeditation className="w-5 h-5 text-blue-600" />
-                    <p className="text-sm text-blue-600 font-semibold">Mindfulness Sessions</p>
+                    <p className="text-sm text-blue-600 font-semibold">{t('dashboard.student.goals.mindfulness')}</p>
                   </div>
                   <p className="text-3xl font-bold text-blue-700 mb-2">3/5</p>
                   <div className="w-full bg-blue-200 rounded-full h-3 shadow-inner">
@@ -115,7 +117,7 @@ export const StudentDashboard = () => {
                 <div className="relative z-10">
                   <div className="flex items-center gap-2 mb-3">
                     <FaHeart className="w-5 h-5 text-green-600" />
-                    <p className="text-sm text-green-600 font-semibold">Daily Check-ins</p>
+                    <p className="text-sm text-green-600 font-semibold">{t('dashboard.student.goals.checkins')}</p>
                   </div>
                   <p className="text-3xl font-bold text-green-700 mb-2">5/7</p>
                   <div className="w-full bg-green-200 rounded-full h-3 shadow-inner">
@@ -129,7 +131,7 @@ export const StudentDashboard = () => {
                 <div className="relative z-10">
                   <div className="flex items-center gap-2 mb-3">
                     <FaUsers className="w-5 h-5 text-purple-600" />
-                    <p className="text-sm text-purple-600 font-semibold">Peer Support</p>
+                    <p className="text-sm text-purple-600 font-semibold">{t('dashboard.student.goals.peer')}</p>
                   </div>
                   <p className="text-3xl font-bold text-purple-700 mb-2">1/3</p>
                   <div className="w-full bg-purple-200 rounded-full h-3 shadow-inner">
@@ -148,7 +150,7 @@ export const StudentDashboard = () => {
               <div className="w-12 h-12 bg-gradient-to-br from-yellow-500 via-orange-500 to-red-500 rounded-xl flex items-center justify-center shadow-lg transform hover:scale-105 transition-transform duration-300">
                 <FaTrophy className="w-6 h-6 text-white" />
               </div>
-              <span className="bg-gradient-to-r from-yellow-600 to-orange-600 bg-clip-text text-transparent">Progress</span>
+              <span className="bg-gradient-to-r from-yellow-600 to-orange-600 bg-clip-text text-transparent">{t('dashboard.student.progress.title')}</span>
             </CardTitle>
           </CardHeader>
           <CardContent className="relative z-10">
@@ -176,7 +178,7 @@ export const StudentDashboard = () => {
               <div className="space-y-2">
                 <p className="text-sm text-gray-600 font-semibold flex items-center justify-center gap-2">
                   <GiStarFormation className="w-4 h-4 text-yellow-500" />
-                  Wellness Score
+                  {t('dashboard.student.progress.score')}
                 </p>
                 <div className="flex items-center justify-center gap-1">
                   <FaStar className="w-3 h-3 text-yellow-400" />
@@ -197,7 +199,7 @@ export const StudentDashboard = () => {
               <div className="w-12 h-12 bg-gradient-to-br from-purple-500 via-pink-500 to-blue-500 rounded-xl flex items-center justify-center shadow-lg transform hover:scale-105 transition-transform duration-300">
                 <FaRocket className="w-6 h-6 text-white" />
               </div>
-              <span className="bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">Quick Actions</span>
+              <span className="bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">{t('dashboard.student.quick.title')}</span>
             </CardTitle>
           </CardHeader>
           <CardContent className="relative z-10">
@@ -212,8 +214,8 @@ export const StudentDashboard = () => {
                     <FaComments className="w-6 h-6" />
                   </div>
                   <div className="text-left">
-                    <div className="font-bold text-lg">Start AI Chat</div>
-                    <div className="text-sm opacity-90">Get instant support</div>
+                    <div className="font-bold text-lg">{t('dashboard.student.quick.chat')}</div>
+                    <div className="text-sm opacity-90">{t('features.ai_chat.desc').substring(0, 30)}...</div>
                   </div>
                 </div>
               </Button>
@@ -224,14 +226,14 @@ export const StudentDashboard = () => {
                     <FaCalendarAlt className="w-6 h-6 text-white" />
                   </div>
                   <div className="text-left">
-                    <div className="font-bold text-lg">Book Session</div>
-                    <div className="text-sm text-gray-600">Schedule with counselor</div>
+                    <div className="font-bold text-lg">{t('dashboard.student.quick.book')}</div>
+                    <div className="text-sm text-gray-600">{t('features.booking.desc').substring(0, 30)}...</div>
                   </div>
                 </div>
               </Button>
-              <Button 
+              <Button
                 onClick={() => navigate('/browse-resources')}
-                variant="outline" 
+                variant="outline"
                 className="h-20 justify-start border-2 border-purple-300 bg-gradient-to-r from-purple-50 to-pink-50 hover:border-purple-500 hover:bg-gradient-to-r hover:from-purple-100 hover:to-pink-100 hover:text-purple-700 transition-all duration-300 transform hover:-translate-y-2 hover:scale-105 relative overflow-hidden group"
               >
                 <div className="absolute inset-0 bg-gradient-to-r from-purple-100/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
@@ -240,8 +242,8 @@ export const StudentDashboard = () => {
                     <FaBook className="w-6 h-6 text-white" />
                   </div>
                   <div className="text-left">
-                    <div className="font-bold text-lg">Browse Resources</div>
-                    <div className="text-sm text-gray-600">Self-help materials</div>
+                    <div className="font-bold text-lg">{t('dashboard.student.quick.resources')}</div>
+                    <div className="text-sm text-gray-600">{t('features.resources.desc').substring(0, 30)}...</div>
                   </div>
                 </div>
               </Button>

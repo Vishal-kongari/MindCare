@@ -38,48 +38,43 @@ export const useChatbot = () => {
     "Courage isn’t never falling—it’s standing back up. You are courageous."
   ];
 
+  /* 
+   * Enhanced system prompt is now handled by the Backend (Gemini).
+   * We simply send the user prompt to our own server.
+   */
   const sendToAI = async (prompt: string): Promise<string> => {
-    const apiKey = import.meta.env.VITE_OPENAI_API_KEY || 'sk-mock';
-    
-    // Enhanced system prompt for conversational AI
-    const systemPrompt = `You are a compassionate mental wellness assistant having a real-time conversation. You should:
-
-1. **Maintain conversation context** - Reference previous messages naturally
-2. **Be conversational** - Respond like a real person, not a robot
-3. **Ask follow-up questions** - Keep the conversation flowing
-4. **Show empathy** - Acknowledge their feelings and experiences
-5. **Provide practical help** - Offer specific, actionable advice
-6. **Be encouraging** - Support them through their journey
-
-Remember: This is an ongoing conversation. Reference what they've shared before, ask about their progress, and build on previous topics naturally.`;
-
-    // Build conversation history for context
-    const conversationHistory = messages.slice(-10); // Keep last 10 messages for context
-    
     try {
-      const res = await fetch('https://api.openai.com/v1/chat/completions', {
+      // Get current user ID if available (optional)
+      const profile = await getCurrentUserProfile();
+      const userId = profile?.uid || "anonymous";
+
+      const res = await fetch('/api/chat', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${apiKey}`,
         },
         body: JSON.stringify({
-          model: 'gpt-4o-mini',
-          messages: [
-            { role: 'system', content: systemPrompt },
-            ...conversationHistory.map(m => ({ role: m.role, content: m.content })),
-            { role: 'user', content: prompt },
-          ],
-          temperature: 0.8,
-          max_tokens: 400,
-          presence_penalty: 0.1,
-          frequency_penalty: 0.1,
+          userMessage: prompt,
+          userId: userId,
         })
       });
+
+      if (!res.ok) {
+        throw new Error(`Server error: ${res.status}`);
+      }
+
       const data = await res.json();
-      const reply = data?.choices?.[0]?.message?.content || getFallbackResponse(prompt);
-      return reply;
+
+      // If the backend signals distress, we can also trigger client-side alerts if needed,
+      // but the backend already handles the emergency call logic.
+      if (data.distress) {
+        // You could show a local alert here if desired, e.g.:
+        // setAlert({ show: true, ... });
+      }
+
+      return data.reply || getFallbackResponse(prompt);
     } catch (e) {
+      console.error("AI Request Failed:", e);
       return getFallbackResponse(prompt);
     }
   };
@@ -88,11 +83,11 @@ Remember: This is an ongoing conversation. Reference what they've shared before,
     // Context-aware fallback responses based on conversation history
     const lastMessage = messages[messages.length - 1];
     const isFirstMessage = messages.length <= 1;
-    
+
     if (isFirstMessage) {
       return "Hi there! I'm your wellness assistant. I'm here to listen and support you. What's on your mind today?";
     }
-    
+
     // Check if user is continuing a conversation
     if (lastMessage?.role === 'assistant') {
       const followUpResponses = [
@@ -104,7 +99,7 @@ Remember: This is an ongoing conversation. Reference what they've shared before,
       ];
       return followUpResponses[Math.floor(Math.random() * followUpResponses.length)];
     }
-    
+
     // General fallback responses
     const fallbackResponses = [
       "I'm here to listen and support you. Can you tell me more about what's on your mind?",
@@ -127,12 +122,12 @@ Remember: This is an ongoing conversation. Reference what they've shared before,
         phoneNumber: profile?.phoneNumber,
         guardianPhone: profile?.guardianPhone,
       });
-      
+
       // Simulate emergency contact notifications
       if (profile?.guardianPhone) {
         await triggerEmergencyContact(profile);
       }
-      
+
       // Return immediate supportive response
       return getDistressResponse(profile?.name);
     }
@@ -156,13 +151,13 @@ Remember: This is an ongoing conversation. Reference what they've shared before,
       for (const contact of contacts) {
         await sendEmergencySMS(contact.phone!, contact.name, profile.name || 'Student');
       }
-      
+
       // Send email notifications
       await sendEmergencyEmail(profile);
-      
+
       // Log emergency action
       console.log(`🚨 EMERGENCY ALERT: Contacted ${contacts.length} emergency contacts for ${profile.name}`);
-      
+
     } catch (error) {
       console.error('Emergency contact failed:', error);
     }
@@ -275,12 +270,12 @@ This is an automated alert from the mental health platform.
     if (!input.trim()) return;
     const content = input.trim();
     setLoading(true);
-    
+
     // Add user message immediately
     const userMessage = { id: crypto.randomUUID(), role: 'user' as const, content };
     setMessages(prev => [...prev, userMessage]);
     setInput("");
-    
+
     // Check for distress first
     const crisisReply = await checkDistress(content);
     if (crisisReply) {
@@ -289,7 +284,7 @@ This is an automated alert from the mental health platform.
       setLoading(false);
       return;
     }
-    
+
     // Get AI response
     try {
       const reply = await sendToAI(content);
