@@ -21,6 +21,8 @@ export interface CounselorProfile {
   availability?: string;
   email?: string;
   phoneNumber?: string;
+  bio?: string;
+  institution?: string;
 }
 
 export interface Booking {

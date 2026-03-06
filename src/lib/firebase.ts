@@ -27,7 +27,7 @@ export const getAuthInstance = async () => {
   const app = await getFirebaseApp();
   const { getAuth, setPersistence, browserLocalPersistence } = await import('firebase/auth');
   const auth = getAuth(app);
-  try { await setPersistence(auth, browserLocalPersistence); } catch {}
+  try { await setPersistence(auth, browserLocalPersistence); } catch { }
   return auth;
 };
 
@@ -35,6 +35,12 @@ export const getDb = async () => {
   const app = await getFirebaseApp();
   const { getFirestore } = await import('firebase/firestore');
   return getFirestore(app);
+};
+
+export const getStorage = async () => {
+  const app = await getFirebaseApp();
+  const { getStorage } = await import('firebase/storage');
+  return getStorage(app);
 };
 
 

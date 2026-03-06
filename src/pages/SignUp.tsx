@@ -4,6 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Heart, GraduationCap, Building2, User, Phone, Mail, Lock, Sparkles, ArrowRight } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { setRole, setName } from "@/lib/auth";
@@ -16,6 +17,7 @@ const SignUp = () => {
   // Common fields
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [gender, setGender] = useState("male");
 
   // Student fields
   const [studentName, setStudentName] = useState("");
@@ -105,6 +107,23 @@ const SignUp = () => {
                       <Input id="sPhone" type="tel" placeholder="+91 98765 43210" value={studentPhone} onChange={(e) => setStudentPhone(e.target.value)} className="h-11 pl-10" />
                     </div>
                   </div>
+                  <div className="space-y-2 md:col-span-2">
+                    <Label>Gender</Label>
+                    <RadioGroup defaultValue="male" value={gender} onValueChange={setGender} className="flex gap-4">
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="male" id="male" />
+                        <Label htmlFor="male">Male</Label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="female" id="female" />
+                        <Label htmlFor="female">Female</Label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="other" id="other" />
+                        <Label htmlFor="other">Other</Label>
+                      </div>
+                    </RadioGroup>
+                  </div>
                   <div className="space-y-2">
                     <Label htmlFor="institution">{t('signup.institution')}</Label>
                     <div className="relative">
@@ -132,7 +151,21 @@ const SignUp = () => {
                     <Input id="course" placeholder="B.Tech CSE / MBA / BA Psych..." value={course} onChange={(e) => setCourse(e.target.value)} className="h-11" />
                   </div>
                 </div>
-                <Button className="w-full h-12 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-0.5 rounded-xl font-semibold" onClick={async () => { try { const u = await signUpEmail(email, password, 'student', studentName, studentPhone); setName(u.name); setRole(u.role); navigate('/dashboard'); } catch (e: any) { alert('Sign up failed: ' + e.message); } }}>
+                <Button className="w-full h-12 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-0.5 rounded-xl font-semibold" onClick={async () => {
+                  try {
+                    const u = await signUpEmail(email, password, 'student', studentName, studentPhone, {
+                      gender,
+                      institution,
+                      guardian,
+                      guardianPhone,
+                      hobbies,
+                      course
+                    });
+                    setName(u.name);
+                    setRole(u.role);
+                    navigate('/dashboard');
+                  } catch (e: any) { alert('Sign up failed: ' + e.message); }
+                }}>
                   {t('signup.btn_student')} <ArrowRight className="w-5 h-5 ml-2" />
                 </Button>
               </TabsContent>
@@ -158,6 +191,23 @@ const SignUp = () => {
                       <Input id="cPhone" type="tel" placeholder="+91 98765 43210" value={cPhone} onChange={(e) => setCPhone(e.target.value)} className="h-11 pl-10" />
                     </div>
                   </div>
+                  <div className="space-y-2">
+                    <Label>Gender</Label>
+                    <RadioGroup defaultValue="male" value={gender} onValueChange={setGender} className="flex gap-4">
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="male" id="c_male" />
+                        <Label htmlFor="c_male">Male</Label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="female" id="c_female" />
+                        <Label htmlFor="c_female">Female</Label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="other" id="c_other" />
+                        <Label htmlFor="c_other">Other</Label>
+                      </div>
+                    </RadioGroup>
+                  </div>
                   <div className="space-y-2 md:col-span-2">
                     <Label htmlFor="cInfo">{t('signup.brief')}</Label>
                     <Input id="cInfo" placeholder="Experience, specialization, certifications..." value={cInfo} onChange={(e) => setCInfo(e.target.value)} className="h-11" />
@@ -172,7 +222,10 @@ const SignUp = () => {
                 </div>
                 <Button className="w-full h-12 bg-gradient-to-r from-primary to-secondary text-primary-foreground shadow-large" onClick={async () => {
                   if (!cPhone.trim()) { alert('Please enter your phone number'); return; }
-                  try { const u = await signUpEmail(email, password, 'counselor', cName, cPhone); setName(u.name); setRole(u.role); navigate('/dashboard'); } catch (e: any) { alert('Sign up failed: ' + e.message); }
+                  try {
+                    await signUpEmail(email, password, 'counselor', cName, cPhone, { gender, specialization: cInfo, bio: cInfo, availability: 'Mon-Fri, 9AM-5PM' });
+                    navigate('/dashboard');
+                  } catch (e: any) { alert('Sign up failed: ' + e.message); }
                 }}>
                   {t('signup.btn_counselor')} <ArrowRight className="w-4 h-4 ml-2" />
                 </Button>
@@ -200,6 +253,23 @@ const SignUp = () => {
                     </div>
                   </div>
                   <div className="space-y-2">
+                    <Label>Gender</Label>
+                    <RadioGroup defaultValue="male" value={gender} onValueChange={setGender} className="flex gap-4">
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="male" id="oc_male" />
+                        <Label htmlFor="oc_male">Male</Label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="female" id="oc_female" />
+                        <Label htmlFor="oc_female">Female</Label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="other" id="oc_other" />
+                        <Label htmlFor="oc_other">Other</Label>
+                      </div>
+                    </RadioGroup>
+                  </div>
+                  <div className="space-y-2">
                     <Label htmlFor="ocInstitution">{t('signup.institution')}</Label>
                     <div className="relative">
                       <Building2 className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
@@ -216,7 +286,12 @@ const SignUp = () => {
                 </div>
                 <Button className="w-full h-12 bg-gradient-to-r from-primary to-secondary text-primary-foreground shadow-large" onClick={async () => {
                   if (!ocPhone.trim()) { alert('Please enter your phone number'); return; }
-                  try { const u = await signUpEmail(email, password, 'on-campus-counselor', ocName, ocPhone); setName(u.name); setRole(u.role); navigate('/dashboard'); } catch (e: any) { alert('Sign up failed: ' + e.message); }
+                  try {
+                    await signUpEmail(email, password, 'on-campus-counselor', ocName, ocPhone, { gender, institution: ocInstitution, bio: 'On-campus counselor', availability: 'Mon-Fri, 9AM-5PM' });
+                    navigate('/dashboard');
+                  } catch (e: any) {
+                    alert('Sign up failed: ' + e.message);
+                  }
                 }}>
                   {t('signup.btn_campus')} <ArrowRight className="w-4 h-4 ml-2" />
                 </Button>

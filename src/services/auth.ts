@@ -24,9 +24,9 @@ export const fetchRole = async (uid: string): Promise<{ role: AppRole, name: str
   return { role: 'student', name: '' };
 };
 
-export const ensureProfile = async (uid: string, email: string, role: AppRole, name: string, phoneNumber?: string) => {
+export const ensureProfile = async (uid: string, email: string, role: AppRole, name: string, phoneNumber?: string, additionalData?: any) => {
   const db = await getDb();
-  const profileData: any = { email, role, name };
+  const profileData: any = { email, role, name, ...additionalData };
   if (phoneNumber) {
     profileData.phoneNumber = phoneNumber;
   }
@@ -41,12 +41,12 @@ export const signInEmail = async (email: string, password: string): Promise<AppU
   return { id: cred.user.uid, email: cred.user.email || email, role, name: finalName };
 };
 
-export const signUpEmail = async (email: string, password: string, role: AppRole, displayName?: string, phoneNumber?: string): Promise<AppUser> => {
+export const signUpEmail = async (email: string, password: string, role: AppRole, displayName?: string, phoneNumber?: string, additionalData?: any): Promise<AppUser> => {
   try {
     const auth = await getAuthInstance();
     const cred = await createUserWithEmailAndPassword(auth, email, password);
     const name = (displayName && displayName.trim()) ? displayName.trim() : email.split('@')[0];
-    await ensureProfile(cred.user.uid, email, role, name, phoneNumber);
+    await ensureProfile(cred.user.uid, email, role, name, phoneNumber, additionalData);
     return { id: cred.user.uid, email, role, name };
   } catch (error: any) {
     console.error("SignUp Error Details:", error);

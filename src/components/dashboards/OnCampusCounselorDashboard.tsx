@@ -196,13 +196,22 @@ export const OnCampusCounselorDashboard = () => {
               </p>
             </div>
           </div>
-          <Button
-            variant="outline"
-            onClick={async () => { await signOutUser(); clearAuth(); navigate('/'); }}
-            className="border-gray-300 hover:border-red-500 hover:bg-red-50 hover:text-red-600 transition-colors"
-          >
-            Sign Out
-          </Button>
+          <div className="flex items-center gap-3">
+            <Button
+              onClick={() => navigate('/profile')}
+              className="bg-gradient-to-r from-orange-600 to-pink-600 text-white hover:from-orange-700 hover:to-pink-700 transition-all duration-300 shadow-md hover:shadow-lg transform hover:-translate-y-0.5"
+            >
+              <Users className="w-4 h-4 mr-2" />
+              Profile
+            </Button>
+            <Button
+              variant="outline"
+              onClick={async () => { await signOutUser(); clearAuth(); navigate('/'); }}
+              className="border-gray-300 hover:border-red-500 hover:bg-red-50 hover:text-red-600 transition-colors"
+            >
+              Sign Out
+            </Button>
+          </div>
         </div>
       </header>
 

@@ -4,6 +4,7 @@ import { Star } from "lucide-react";
 
 
 import { useTranslation } from "react-i18next";
+import { motion } from "framer-motion";
 
 export const Testimonials = () => {
   const { t } = useTranslation();
@@ -15,33 +16,40 @@ export const Testimonials = () => {
           <p className="text-xl text-gray-600">{t('testimonials.subtitle')}</p>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          {[1, 2, 3].map((i) => (
-            <Card key={i} className="border-0 bg-white/80 backdrop-blur-sm rounded-3xl shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
-              <CardContent className="p-8">
-                <div className="flex gap-1 mb-6">
-                  {Array.from({ length: 5 }).map((_, i2) => (
-                    <Star key={i2} className="h-5 w-5 text-yellow-400 fill-current" />
-                  ))}
-                </div>
-                <blockquote className="text-gray-700 leading-relaxed mb-6 text-lg italic">
-                  "{t(`testimonials.t${i}.quote`)}"
-                </blockquote>
-                <div className="flex items-center">
-                  <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-500 rounded-full flex items-center justify-center text-white font-bold text-lg mr-4">
-                    {t(`testimonials.t${i}.name`).charAt(0)}
+          {[1, 2, 3].map((i, index) => (
+            <motion.div
+              key={i}
+              initial={{ opacity: 0, y: 40 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, margin: "-50px" }}
+              transition={{ duration: 0.6, delay: index * 0.15 }}
+              className="h-full"
+            >
+              <Card className="h-full border-0 bg-white/80 backdrop-blur-sm rounded-3xl shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
+                <CardContent className="p-8">
+                  <div className="flex gap-1 mb-6">
+                    {Array.from({ length: 5 }).map((_, i2) => (
+                      <Star key={i2} className="h-5 w-5 text-yellow-400 fill-current" />
+                    ))}
                   </div>
-                  <div>
-                    <p className="font-semibold text-gray-900">{t(`testimonials.t${i}.name`)}</p>
-                    <p className="text-sm text-gray-500">{t('testimonials.verified')}</p>
+                  <blockquote className="text-gray-700 leading-relaxed mb-6 text-lg italic">
+                    "{t(`testimonials.t${i}.quote`)}"
+                  </blockquote>
+                  <div className="flex items-center">
+                    <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-500 rounded-full flex items-center justify-center text-white font-bold text-lg mr-4">
+                      {t(`testimonials.t${i}.name`).charAt(0)}
+                    </div>
+                    <div>
+                      <p className="font-semibold text-gray-900">{t(`testimonials.t${i}.name`)}</p>
+                      <p className="text-sm text-gray-500">{t('testimonials.verified')}</p>
+                    </div>
                   </div>
-                </div>
-              </CardContent>
-            </Card>
+                </CardContent>
+              </Card>
+            </motion.div>
           ))}
         </div>
       </div>
     </section>
   );
 };
-
-

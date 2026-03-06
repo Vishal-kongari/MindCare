@@ -93,6 +93,7 @@ const features = [
 ];
 
 import { useTranslation } from "react-i18next";
+import { motion } from "framer-motion";
 
 export const FeatureCards = () => {
   const { t } = useTranslation();
@@ -140,8 +141,15 @@ export const FeatureCards = () => {
             };
 
             return (
-              <div key={index} className="group">
-                <Card className="h-full border-0 bg-white/90 backdrop-blur-sm rounded-3xl shadow-xl hover:shadow-3xl transition-all duration-700 hover:-translate-y-3 overflow-hidden relative">
+              <motion.div
+                key={index}
+                className="group h-full"
+                initial={{ opacity: 0, y: 30 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, margin: "-50px" }}
+                transition={{ duration: 0.5, delay: index * 0.1 }}
+              >
+                <Card className="h-full border-0 bg-white/90 backdrop-blur-sm rounded-3xl shadow-xl hover:shadow-2xl transition-all duration-500 hover:-translate-y-2 overflow-hidden relative">
                   {/* Animated gradient border */}
                   <div className={`h-1 bg-gradient-to-r ${feature.gradient} opacity-80 group-hover:opacity-100 transition-opacity duration-300`} />
 
@@ -178,7 +186,7 @@ export const FeatureCards = () => {
                   {/* Subtle hover glow */}
                   <div className={`absolute inset-0 bg-gradient-to-br ${feature.gradient} opacity-0 group-hover:opacity-5 transition-opacity duration-700 rounded-3xl pointer-events-none`} />
                 </Card>
-              </div>
+              </motion.div>
             );
           })}
         </div>

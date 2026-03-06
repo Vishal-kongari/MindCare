@@ -9,6 +9,17 @@ import { GiMedicalPack, GiHeartWings, GiPeaceDove, GiLotus, GiYinYang, GiCrystal
 import { MdPsychology, MdHealing, MdFavorite, MdEmojiNature, MdAutoAwesome, MdTrendingUp, MdInsights, MdExplore, MdCelebration, MdLocalFlorist, MdWbSunny, MdNightlight, MdSelfImprovement, MdNature, MdSpa, MdHealthAndSafety, MdSupportAgent, MdVerifiedUser, MdThumbUp, MdEmojiEvents, MdGrade, MdWorkspacePremium } from "react-icons/md";
 import { useTranslation } from "react-i18next";
 import { useEffect, useState } from "react";
+import { motion } from "framer-motion";
+
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: { opacity: 1, transition: { staggerChildren: 0.1 } }
+};
+
+const itemVariants = {
+  hidden: { opacity: 0, y: 30 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.5 } }
+};
 import { acceptBooking, getUserProfileById, listenBookingsForCounselor, rejectBooking, completeSession, debugCounselorBookings, fixCounselorIdMismatch, createTestBooking, assignPendingBookingsToCounselor, type Booking } from "@/services/bookings";
 import { debugGlobalBookings } from "@/lib/debugBookings";
 import { Input } from "@/components/ui/input";
@@ -19,6 +30,7 @@ import { testFirebaseConnection } from "@/lib/firebaseTest";
 import { getAuthInstance } from "@/lib/firebase";
 
 export const CounselorDashboard = () => {
+  const MotionCard = motion(Card);
   const { t } = useTranslation();
   const navigate = useNavigate();
   const name = getName();
@@ -257,18 +269,27 @@ export const CounselorDashboard = () => {
           </div>
           <div className="flex items-center gap-2">
 
-            <Button
-              variant="outline"
-              onClick={async () => { await signOutUser(); clearAuth(); navigate('/'); }}
-              className="border-gray-300 hover:border-red-500 hover:bg-red-50 hover:text-red-600 transition-colors"
-            >
-              Sign Out
-            </Button>
+            <div className="flex items-center gap-3">
+              <Button
+                onClick={() => navigate('/profile')}
+                className="bg-gradient-to-r from-emerald-600 to-teal-600 text-white hover:from-emerald-700 hover:to-teal-700 transition-all duration-300 shadow-md hover:shadow-lg transform hover:-translate-y-0.5"
+              >
+                <Users className="w-4 h-4 mr-2" />
+                Profile
+              </Button>
+              <Button
+                variant="outline"
+                onClick={async () => { await signOutUser(); clearAuth(); navigate('/'); }}
+                className="border-gray-300 hover:border-red-500 hover:bg-red-50 hover:text-red-600 transition-colors"
+              >
+                Sign Out
+              </Button>
+            </div>
           </div>
         </div>
       </header>
-      <main className="container py-8 grid grid-cols-1 md:grid-cols-3 gap-6 relative z-10">
-        <Card className="md:col-span-2 border-0 shadow-2xl bg-white/90 backdrop-blur-sm rounded-3xl relative overflow-hidden">
+      <motion.main variants={containerVariants} initial="hidden" animate="visible" className="container py-8 grid grid-cols-1 md:grid-cols-3 gap-6 relative z-10">
+        <MotionCard variants={itemVariants} className="md:col-span-2 border-0 shadow-2xl bg-white/90 backdrop-blur-sm rounded-3xl relative overflow-hidden">
           <div className="absolute inset-0 bg-gradient-to-br from-emerald-100/30 via-teal-100/20 to-blue-100/30"></div>
           <CardHeader className="relative z-10">
             <CardTitle className="flex items-center gap-3 text-xl font-bold text-gray-900">
@@ -583,8 +604,8 @@ export const CounselorDashboard = () => {
               </div>
             ))}
           </CardContent>
-        </Card>
-        <Card className="border-0 shadow-2xl bg-white/90 backdrop-blur-sm rounded-3xl relative overflow-hidden">
+        </MotionCard>
+        <MotionCard variants={itemVariants} className="border-0 shadow-2xl bg-white/90 backdrop-blur-sm rounded-3xl relative overflow-hidden">
           <div className="absolute inset-0 bg-gradient-to-br from-blue-100/30 via-cyan-100/20 to-teal-100/30"></div>
           <CardHeader className="relative z-10">
             <CardTitle className="flex items-center gap-3 text-lg font-bold text-gray-900">
@@ -606,8 +627,8 @@ export const CounselorDashboard = () => {
             <p className="text-sm text-gray-600 font-medium">Assigned this month</p>
             <p className="text-xs text-blue-600 mt-1">+12% from last month</p>
           </CardContent>
-        </Card>
-        <Card className="border-0 shadow-2xl bg-white/90 backdrop-blur-sm rounded-3xl relative overflow-hidden">
+        </MotionCard>
+        <MotionCard variants={itemVariants} className="border-0 shadow-2xl bg-white/90 backdrop-blur-sm rounded-3xl relative overflow-hidden">
           <div className="absolute inset-0 bg-gradient-to-br from-green-100/30 via-emerald-100/20 to-teal-100/30"></div>
           <CardHeader className="relative z-10">
             <CardTitle className="flex items-center gap-3 text-lg font-bold text-gray-900">
@@ -633,8 +654,8 @@ export const CounselorDashboard = () => {
               <p className="text-xl font-bold text-blue-600">95%</p>
             </div>
           </CardContent>
-        </Card>
-        <Card className="md:col-span-3 border-0 shadow-large bg-card/70 backdrop-blur">
+        </MotionCard>
+        <MotionCard variants={itemVariants} className="md:col-span-3 border-0 shadow-large bg-card/70 backdrop-blur">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <MessageSquare className="w-5 h-5 text-accent" /> {t('dashboard.counselor.recent_messages')}
@@ -645,8 +666,8 @@ export const CounselorDashboard = () => {
             <div className="p-4 rounded-xl border">Lisa Chen: "I'd like to reschedule..." • 15m ago</div>
             <div className="p-4 rounded-xl border">David Kim: "The breathing exercises helped a lot!" • 1h ago</div>
           </CardContent>
-        </Card>
-        <Card className="md:col-span-3 border-0 shadow-large bg-card/70 backdrop-blur">
+        </MotionCard>
+        <MotionCard variants={itemVariants} className="md:col-span-3 border-0 shadow-large bg-card/70 backdrop-blur">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Users className="w-5 h-5 text-secondary" /> {t('dashboard.counselor.caseload')}
@@ -658,8 +679,8 @@ export const CounselorDashboard = () => {
             <div className="p-4 rounded-xl bg-accent-soft">Fair • 3</div>
             <div className="p-4 rounded-xl bg-warning-soft">New • 1</div>
           </CardContent>
-        </Card>
-        <Card className="md:col-span-3 border-0 shadow-large bg-card/70 backdrop-blur">
+        </MotionCard>
+        <MotionCard variants={itemVariants} className="md:col-span-3 border-0 shadow-large bg-card/70 backdrop-blur">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <CheckCircle2 className="w-5 h-5 text-primary" /> {t('dashboard.counselor.tasks')}
@@ -670,8 +691,8 @@ export const CounselorDashboard = () => {
             <div className="p-4 rounded-xl border">Prepare group session agenda</div>
             <div className="p-4 rounded-xl border">Respond to 2 unread messages</div>
           </CardContent>
-        </Card>
-      </main>
+        </MotionCard>
+      </motion.main>
     </div>
   );
 };

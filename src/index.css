@@ -9,66 +9,66 @@
     /* Background colors - soft, calming */
     --background: 210 25% 98%;
     --foreground: 215 25% 27%;
-    
+
     /* Card colors - clean white with subtle warmth */
     --card: 0 0% 100%;
     --card-foreground: 215 25% 27%;
-    
+
     /* Popover colors */
     --popover: 0 0% 100%;
     --popover-foreground: 215 25% 27%;
-    
-    /* Primary colors - calming teal/blue for trust */
-    --primary: 191 97% 42%;
+
+    /* Primary colors - deeper calming teal */
+    --primary: 185 85% 40%;
     --primary-foreground: 0 0% 100%;
-    --primary-soft: 191 97% 95%;
-    
-    /* Secondary colors - warm sage green for healing */
-    --secondary: 142 84% 55%;
+    --primary-soft: 185 85% 95%;
+
+    /* Secondary colors - soft sage green for healing */
+    --secondary: 150 60% 50%;
     --secondary-foreground: 0 0% 100%;
-    --secondary-soft: 142 84% 93%;
-    
-    /* Muted colors - gentle grays */
-    --muted: 210 20% 95%;
-    --muted-foreground: 215 16% 47%;
-    
-    /* Accent colors - gentle coral for warmth */
-    --accent: 25 96% 56%;
+    --secondary-soft: 150 60% 93%;
+
+    /* Muted colors - gentle grays/blues */
+    --muted: 210 30% 96%;
+    --muted-foreground: 215 20% 45%;
+
+    /* Accent colors - warm sunrise coral */
+    --accent: 20 90% 65%;
     --accent-foreground: 0 0% 100%;
-    --accent-soft: 25 96% 94%;
-    
-    /* Success color - nature green */
-    --success: 142 72% 44%;
+    --accent-soft: 20 90% 95%;
+
+    /* Success color - vibrant nature green */
+    --success: 140 65% 45%;
     --success-foreground: 0 0% 100%;
-    --success-soft: 142 71% 95%;
-    
-    /* Warning color - gentle yellow */
-    --warning: 48 97% 56%;
+    --success-soft: 140 65% 94%;
+
+    /* Warning color - soft golden yellow */
+    --warning: 45 95% 60%;
     --warning-foreground: 25 10% 15%;
-    --warning-soft: 48 96% 95%;
-    
-    /* Destructive colors - soft red for gentleness */
-    --destructive: 0 84% 60%;
+    --warning-soft: 45 95% 95%;
+
+    /* Destructive colors - soft rose for gentleness */
+    --destructive: 350 80% 65%;
     --destructive-foreground: 0 0% 100%;
-    
+
     /* Border and input colors */
-    --border: 210 20% 90%;
-    --input: 210 20% 95%;
-    --ring: 199 89% 48%;
-    
-    /* Gradients for beautiful backgrounds */
-    --gradient-primary: linear-gradient(135deg, hsl(191 97% 42%), hsl(199 90% 55%), hsl(142 84% 55%));
-    --gradient-soft: linear-gradient(135deg, hsl(199 90% 96%), hsl(191 97% 96%), hsl(142 84% 95%));
-    --gradient-accent: linear-gradient(135deg, hsl(25 96% 94%), hsl(48 97% 92%));
-    
+    --border: 210 25% 92%;
+    --input: 210 25% 95%;
+    --ring: 185 85% 40%;
+
+    /* Gradients for beautiful, deeper backgrounds */
+    --gradient-primary: linear-gradient(135deg, hsl(185 85% 45%), hsl(195 80% 50%), hsl(150 60% 55%));
+    --gradient-soft: linear-gradient(135deg, hsl(185 30% 96%), hsl(200 40% 97%), hsl(150 30% 96%));
+    --gradient-accent: linear-gradient(135deg, hsl(20 90% 95%), hsl(45 95% 93%));
+
     /* Shadows for depth */
-    --shadow-soft: 0 4px 6px -1px hsl(199 89% 48% / 0.1);
-    --shadow-medium: 0 10px 15px -3px hsl(199 89% 48% / 0.1);
-    --shadow-large: 0 25px 50px -12px hsl(199 89% 48% / 0.25);
-    
+    --shadow-soft: 0 4px 14px 0 hsl(185 85% 40% / 0.08);
+    --shadow-medium: 0 10px 25px -4px hsl(185 85% 40% / 0.12);
+    --shadow-large: 0 25px 50px -12px hsl(185 85% 40% / 0.2);
+
     /* Animations */
     --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    
+
     --radius: 0.75rem;
 
     --sidebar-background: 0 0% 98%;
@@ -92,48 +92,48 @@
     /* Dark mode - still calming but with depth */
     --background: 215 25% 10%;
     --foreground: 210 25% 95%;
-    
+
     --card: 215 25% 12%;
     --card-foreground: 210 25% 95%;
-    
+
     --popover: 215 25% 12%;
     --popover-foreground: 210 25% 95%;
-    
+
     --primary: 199 89% 55%;
     --primary-foreground: 0 0% 100%;
     --primary-soft: 199 89% 15%;
-    
+
     --secondary: 142 76% 65%;
     --secondary-foreground: 0 0% 100%;
     --secondary-soft: 142 76% 15%;
-    
+
     --muted: 215 25% 15%;
     --muted-foreground: 215 16% 65%;
-    
+
     --accent: 25 95% 60%;
     --accent-foreground: 0 0% 100%;
     --accent-soft: 25 95% 15%;
-    
+
     --success: 142 71% 55%;
     --success-foreground: 0 0% 100%;
     --success-soft: 142 71% 15%;
-    
+
     --warning: 48 96% 60%;
     --warning-foreground: 25 10% 15%;
     --warning-soft: 48 96% 15%;
-    
+
     --destructive: 0 84% 65%;
     --destructive-foreground: 0 0% 100%;
-    
+
     --border: 215 25% 20%;
     --input: 215 25% 15%;
     --ring: 199 89% 55%;
-    
+
     /* Dark gradients */
     --gradient-primary: linear-gradient(135deg, hsl(199 89% 25%), hsl(142 76% 25%));
     --gradient-soft: linear-gradient(135deg, hsl(199 89% 15%), hsl(142 76% 15%));
     --gradient-accent: linear-gradient(135deg, hsl(25 95% 15%), hsl(48 96% 15%));
-    
+
     /* Dark shadows */
     --shadow-soft: 0 4px 6px -1px hsl(0 0% 0% / 0.3);
     --shadow-medium: 0 10px 15px -3px hsl(0 0% 0% / 0.3);
@@ -153,29 +153,122 @@
 
 /* Landing page animations and utilities */
 @keyframes float1 {
-  0% { transform: translateY(0px); }
-  50% { transform: translateY(-10px); }
-  100% { transform: translateY(0px); }
-}
-@keyframes float2 {
-  0% { transform: translateY(0px) translateX(0px); }
-  50% { transform: translateY(8px) translateX(6px); }
-  100% { transform: translateY(0px) translateX(0px); }
-}
-@keyframes glowPulse {
-  0% { opacity: .45; }
-  50% { opacity: .9; }
-  100% { opacity: .45; }
-}
-@keyframes shimmer {
-  0% { background-position: -200% 0; }
-  100% { background-position: 200% 0; }
+  0% {
+    transform: translateY(0px);
+  }
+
+  50% {
+    transform: translateY(-15px);
+  }
+
+  100% {
+    transform: translateY(0px);
+  }
 }
 
-.animate-float-slow { animation: float1 6s ease-in-out infinite; }
-.animate-float { animation: float2 5s ease-in-out infinite; }
-.animate-glow { animation: glowPulse 4s ease-in-out infinite; }
+@keyframes float2 {
+  0% {
+    transform: translateY(0px) translateX(0px);
+  }
+
+  50% {
+    transform: translateY(12px) translateX(10px);
+  }
+
+  100% {
+    transform: translateY(0px) translateX(0px);
+  }
+}
+
+@keyframes glowPulse {
+  0% {
+    opacity: .4;
+  }
+
+  50% {
+    opacity: .8;
+  }
+
+  100% {
+    opacity: .4;
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+@keyframes breath {
+  0% {
+    transform: scale(1);
+    opacity: 0.8;
+  }
+
+  50% {
+    transform: scale(1.05);
+    opacity: 1;
+  }
+
+  100% {
+    transform: scale(1);
+    opacity: 0.8;
+  }
+}
+
+@keyframes blobs {
+  0% {
+    border-radius: 60% 40% 30% 70% / 60% 30% 70% 40%;
+  }
+
+  50% {
+    border-radius: 30% 60% 70% 40% / 50% 60% 30% 60%;
+  }
+
+  100% {
+    border-radius: 60% 40% 30% 70% / 60% 30% 70% 40%;
+  }
+}
+
+.animate-float-slow {
+  animation: float1 7s ease-in-out infinite;
+}
+
+.animate-float {
+  animation: float2 5s ease-in-out infinite;
+}
+
+.animate-glow {
+  animation: glowPulse 4s ease-in-out infinite;
+}
+
 .animate-shimmer {
   background-size: 200% 100%;
   animation: shimmer 3s linear infinite;
+}
+
+.animate-breath {
+  animation: breath 6s ease-in-out infinite;
+}
+
+.animate-blob {
+  animation: blobs 8s ease-in-out infinite;
+}
+
+/* Glassmorphism utilities */
+.glass {
+  @apply bg-white/60 backdrop-blur-xl border border-white/40 shadow-sm;
+}
+
+.glass-dark {
+  @apply bg-black/40 backdrop-blur-xl border border-white/10 shadow-sm;
+}
+
+.glass-card {
+  @apply bg-white/70 backdrop-blur-md border border-white/50 shadow-md hover:shadow-lg transition-shadow duration-300;
 }

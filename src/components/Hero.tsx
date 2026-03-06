@@ -4,6 +4,20 @@ import { ArrowRight, Shield, Users, Clock, Sparkles, Heart, Star, ChevronRight }
 import { Link } from "react-router-dom";
 import defaultHero from "@/assets/Screenshot 2025-09-20 112724.png";
 import { useTranslation } from "react-i18next";
+import { motion } from "framer-motion";
+
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: { staggerChildren: 0.15 }
+  }
+};
+
+const itemVariants = {
+  hidden: { opacity: 0, y: 20 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.6 } }
+};
 
 export const Hero = () => {
   const { t } = useTranslation();
@@ -28,28 +42,33 @@ export const Hero = () => {
       <div className="container relative z-10 px-4">
         <div className="flex flex-col lg:flex-row items-center justify-between gap-12 max-w-7xl mx-auto">
           {/* Text Content */}
-          <div className="flex-1 text-center lg:text-left">
+          <motion.div
+            className="flex-1 text-center lg:text-left"
+            variants={containerVariants}
+            initial="hidden"
+            animate="visible"
+          >
             {/* Badge */}
-            <div className="mb-8 inline-flex items-center rounded-full bg-white/80 backdrop-blur-sm px-4 py-2 text-sm font-semibold text-blue-600 shadow-lg border border-blue-100">
+            <motion.div variants={itemVariants} className="mb-8 inline-flex items-center rounded-full bg-white/80 backdrop-blur-sm px-4 py-2 text-sm font-semibold text-blue-600 shadow-lg border border-blue-100">
               <Sparkles className="h-4 w-4 mr-2" />
               {t('hero.badge')}
-            </div>
+            </motion.div>
 
             {/* Main Heading */}
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-gray-900 mb-6 leading-tight">
+            <motion.h1 variants={itemVariants} className="text-4xl md:text-5xl lg:text-6xl font-bold text-gray-900 mb-6 leading-tight">
               {t('hero.title')}
               <span className="block bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 bg-clip-text text-transparent mt-2">
                 {t('hero.titleHigh')}
               </span>
-            </h1>
+            </motion.h1>
 
             {/* Subtitle */}
-            <p className="text-lg md:text-xl text-gray-700 mb-10 leading-relaxed max-w-2xl mx-auto lg:mx-0">
+            <motion.p variants={itemVariants} className="text-lg md:text-xl text-gray-700 mb-10 leading-relaxed max-w-2xl mx-auto lg:mx-0">
               {t('hero.subtitle')}
-            </p>
+            </motion.p>
 
             {/* CTA Buttons */}
-            <div className="flex flex-col sm:flex-row gap-4 mb-12">
+            <motion.div variants={itemVariants} className="flex flex-col sm:flex-row gap-4 mb-12 justify-center lg:justify-start">
               <Button
                 asChild
                 size="lg"
@@ -70,10 +89,10 @@ export const Hero = () => {
                   <ChevronRight className="h-4 w-4 ml-1 group-hover:translate-x-1 transition-transform" />
                 </span>
               </Button>
-            </div>
+            </motion.div>
 
             {/* Trust Indicators */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 max-w-2xl">
+            <motion.div variants={itemVariants} className="grid grid-cols-1 sm:grid-cols-3 gap-6 max-w-2xl mx-auto lg:mx-0">
               <div className="flex items-center gap-3 p-4 bg-white/70 backdrop-blur-sm rounded-2xl shadow-sm hover:shadow-md transition-shadow">
                 <div className="flex-shrink-0 w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
                   <Shield className="h-6 w-6 text-blue-600" />
@@ -101,11 +120,16 @@ export const Hero = () => {
                   <p className="text-sm text-gray-600">{t('hero.stats.communityDesc')}</p>
                 </div>
               </div>
-            </div>
-          </div>
+            </motion.div>
+          </motion.div>
 
           {/* Image/Visual Content */}
-          <div className="flex-1 relative">
+          <motion.div
+            className="flex-1 relative"
+            initial={{ opacity: 0, x: 30 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.8, delay: 0.4, ease: "easeOut" }}
+          >
             <div className="relative rounded-3xl overflow-hidden shadow-2xl transform hover:scale-105 transition-transform duration-700">
               <img
                 src={bgSrc}
@@ -159,7 +183,7 @@ export const Hero = () => {
                 <p className="text-sm text-gray-600">Available</p>
               </div>
             </div>
-          </div>
+          </motion.div>
         </div>
       </div>
 
@@ -173,6 +197,6 @@ export const Hero = () => {
           animation: float 8s ease-in-out infinite;
         }
       `}</style>
-    </section>
+    </section >
   );
 };

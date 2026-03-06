@@ -11,6 +11,8 @@ import { RoleRouter } from "@/components/RoleRouter";
 import Tracker from "./pages/Tracker";
 import BrowseResources from "./pages/BrowseResources";
 import { InspirationalVerses } from "./components/insepri";
+import DoctorProfile from "./pages/DoctorProfile";
+import Profile from "./pages/Profile";
 
 const queryClient = new QueryClient();
 const App = () => (
@@ -24,8 +26,10 @@ const App = () => (
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<SignUp />} />
           <Route path="/dashboard" element={<RoleRouter />} />
+          <Route path="/student/doctor/:id" element={<DoctorProfile />} />
           <Route path="/tracker" element={<Tracker />} />
           <Route path="/browse-resources" element={<BrowseResources />} />
+          <Route path="/profile" element={<Profile />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
           <Route path="/ins" element={<InspirationalVerses />} />
