@@ -39,6 +39,26 @@ export interface Booking {
   counselorName?: string;
 }
 
+export const getStudentsByInstitution = async (university: string): Promise<any[]> => {
+  try {
+    const db = await getDb();
+    const q = query(
+      collection(db, 'users'),
+      where('role', '==', 'student')
+    );
+    const snap = await getDocs(q);
+    return snap.docs
+      .map(doc => ({ id: doc.id, ...doc.data() }))
+      .filter((student: any) => 
+        student.university && 
+        student.university.trim().toLowerCase() === university.trim().toLowerCase()
+      );
+  } catch (error) {
+    console.error('Error getting students by institution:', error);
+    throw new Error('Failed to load students.');
+  }
+};
+
 export const listCounselors = async (): Promise<CounselorProfile[]> => {
   try {
     const db = await getDb();
@@ -212,13 +232,7 @@ export const completeSession = async (bookingId: string, notes?: string): Promis
   }
 };
 
-export const getUserProfileById = async (userId: string): Promise<{
-  id: string;
-  name: string;
-  email?: string;
-  phoneNumber?: string;
-  guardianPhone?: string;
-} | null> => {
+export const getUserProfileById = async (userId: string): Promise<any | null> => {
   try {
     const db = await getDb();
     const userDoc = await getDoc(doc(db, 'users', userId));
@@ -232,9 +246,7 @@ export const getUserProfileById = async (userId: string): Promise<{
     return {
       id: userId,
       name: data.name || 'Unknown User',
-      email: data.email,
-      phoneNumber: data.phoneNumber,
-      guardianPhone: data.guardianPhone
+      ...data
     };
   } catch (error) {
     console.error('Error getting user profile:', error);
@@ -565,6 +577,7 @@ export const createTestBooking = async (counselorId: string): Promise<string> =>
 
 // Helper function to check if index is ready
 export const checkIndexStatus = async (): Promise<boolean> => {
+  // ... existing checkIndexStatus ...
   try {
     const auth = await getAuthInstance();
     const user = auth.currentUser;
@@ -592,5 +605,43 @@ export const checkIndexStatus = async (): Promise<boolean> => {
     }
     console.error('❌ Error checking index status:', error);
     return false;
+  }
+};
+
+export interface MedicalReview {
+  id: string;
+  counselorName: string;
+  date: string;
+  notes: string;
+}
+
+export const getStudentMedicalReviews = async (studentId: string): Promise<MedicalReview[]> => {
+  try {
+    const db = await getDb();
+    const q = query(collection(db, 'bookings'), where('userId', '==', studentId), where('status', '==', 'completed'));
+    const snap = await getDocs(q);
+
+    const reviews: MedicalReview[] = [];
+    for (const doc of snap.docs) {
+      const data = doc.data() as Booking;
+      if (data.notes && data.notes.trim() !== '') {
+        let cName = data.counselorName || 'Counselor';
+        if (!data.counselorName && data.counselorId) {
+          const profile = await getUserProfileById(data.counselorId);
+          if (profile) cName = profile.name;
+        }
+        reviews.push({
+          id: doc.id,
+          counselorName: cName,
+          date: data.completedAt || data.createdAt?.toDate?.()?.toISOString() || new Date().toISOString(),
+          notes: data.notes
+        });
+      }
+    }
+
+    return reviews.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+  } catch (error) {
+    console.error('Error fetching medical reviews:', error);
+    return [];
   }
 };

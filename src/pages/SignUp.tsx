@@ -5,6 +5,7 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Heart, GraduationCap, Building2, User, Phone, Mail, Lock, Sparkles, ArrowRight } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { setRole, setName } from "@/lib/auth";
@@ -22,11 +23,11 @@ const SignUp = () => {
   // Student fields
   const [studentName, setStudentName] = useState("");
   const [studentPhone, setStudentPhone] = useState("");
-  const [institution, setInstitution] = useState("");
+  const [institution, setInstitution] = useState(""); // University / College
   const [guardian, setGuardian] = useState("");
   const [guardianPhone, setGuardianPhone] = useState("");
   const [hobbies, setHobbies] = useState("");
-  const [course, setCourse] = useState("");
+  const [pursuingField, setPursuingField] = useState("");
 
   // Counselor fields
   const [cName, setCName] = useState("");
@@ -125,11 +126,11 @@ const SignUp = () => {
                     </RadioGroup>
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="institution">{t('signup.institution')}</Label>
-                    <div className="relative">
-                      <Building2 className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-                      <Input id="institution" placeholder="University / College" value={institution} onChange={(e) => setInstitution(e.target.value)} className="h-11 pl-10" />
-                    </div>
+                      <Label htmlFor="institution">{t('signup.institution')}</Label>
+                      <div className="relative">
+                        <Building2 className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                        <Input id="institution" placeholder="University / College" value={institution} onChange={(e) => setInstitution(e.target.value)} className="h-11 pl-10" />
+                      </div>
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="guardian">{t('signup.guardian')}</Label>
@@ -147,19 +148,29 @@ const SignUp = () => {
                     <Input id="hobbies" placeholder="Reading, music, sports..." value={hobbies} onChange={(e) => setHobbies(e.target.value)} className="h-11" />
                   </div>
                   <div className="space-y-2 md:col-span-2">
-                    <Label htmlFor="course">{t('signup.course')}</Label>
-                    <Input id="course" placeholder="B.Tech CSE / MBA / BA Psych..." value={course} onChange={(e) => setCourse(e.target.value)} className="h-11" />
+                    <Label htmlFor="course">Currently Pursuing Field</Label>
+                    <Select value={pursuingField} onValueChange={setPursuingField}>
+                      <SelectTrigger className="h-11">
+                        <SelectValue placeholder="Select your field of study" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Engineering">Engineering</SelectItem>
+                        <SelectItem value="Business">Business</SelectItem>
+                        <SelectItem value="Liberal Arts">Liberal Arts</SelectItem>
+                        <SelectItem value="Sciences">Sciences</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
                 </div>
                 <Button className="w-full h-12 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-0.5 rounded-xl font-semibold" onClick={async () => {
+                  if (!pursuingField) { alert('Please select your currently pursuing field'); return; }
                   try {
-                    const u = await signUpEmail(email, password, 'student', studentName, studentPhone, {
+                    const u = await signUpEmail(email, password, 'student', studentName, studentPhone, institution, pursuingField, {
                       gender,
-                      institution,
                       guardian,
                       guardianPhone,
                       hobbies,
-                      course
+                      course: pursuingField
                     });
                     setName(u.name);
                     setRole(u.role);
@@ -223,7 +234,7 @@ const SignUp = () => {
                 <Button className="w-full h-12 bg-gradient-to-r from-primary to-secondary text-primary-foreground shadow-large" onClick={async () => {
                   if (!cPhone.trim()) { alert('Please enter your phone number'); return; }
                   try {
-                    await signUpEmail(email, password, 'counselor', cName, cPhone, { gender, specialization: cInfo, bio: cInfo, availability: 'Mon-Fri, 9AM-5PM' });
+                    await signUpEmail(email, password, 'counselor', cName, cPhone, undefined, undefined, { gender, specialization: cInfo, bio: cInfo, availability: 'Mon-Fri, 9AM-5PM' });
                     navigate('/dashboard');
                   } catch (e: any) { alert('Sign up failed: ' + e.message); }
                 }}>
@@ -287,7 +298,7 @@ const SignUp = () => {
                 <Button className="w-full h-12 bg-gradient-to-r from-primary to-secondary text-primary-foreground shadow-large" onClick={async () => {
                   if (!ocPhone.trim()) { alert('Please enter your phone number'); return; }
                   try {
-                    await signUpEmail(email, password, 'on-campus-counselor', ocName, ocPhone, { gender, institution: ocInstitution, bio: 'On-campus counselor', availability: 'Mon-Fri, 9AM-5PM' });
+                    await signUpEmail(email, password, 'on-campus-counselor', ocName, ocPhone, ocInstitution, undefined, { gender, bio: 'On-campus counselor', availability: 'Mon-Fri, 9AM-5PM' });
                     navigate('/dashboard');
                   } catch (e: any) {
                     alert('Sign up failed: ' + e.message);

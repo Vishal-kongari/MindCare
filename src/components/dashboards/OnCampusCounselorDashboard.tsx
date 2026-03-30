@@ -11,20 +11,26 @@ import { useEffect, useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import {
   listenBookingsForCounselor,
   acceptBooking,
   rejectBooking,
   completeSession,
   getUserProfileById,
+  getStudentMedicalReviews,
+  getStudentsByInstitution,
+  type MedicalReview,
   type Booking
 } from "@/services/bookings";
+import { getAuthInstance } from "@/lib/firebase";
 
 export const OnCampusCounselorDashboard = () => {
   const navigate = useNavigate();
   const name = getName();
   const [bookings, setBookings] = useState<Booking[]>([]);
-  const [studentNames, setStudentNames] = useState<Record<string, string>>({});
+  const [studentProfiles, setStudentProfiles] = useState<Record<string, any>>({});
+  const [campusStudents, setCampusStudents] = useState<any[]>([]);
   const [loadingActionId, setLoadingActionId] = useState<string | null>(null);
   const [showTimeInput, setShowTimeInput] = useState<string | null>(null);
   const [timeSlot, setTimeSlot] = useState("");
@@ -33,6 +39,22 @@ export const OnCampusCounselorDashboard = () => {
   const [loading, setLoading] = useState(true);
   const [showNotesInput, setShowNotesInput] = useState<string | null>(null);
   const [sessionNotes, setSessionNotes] = useState("");
+  const [historyModalUserId, setHistoryModalUserId] = useState<string | null>(null);
+  const [medicalHistory, setMedicalHistory] = useState<MedicalReview[]>([]);
+  const [loadingHistory, setLoadingHistory] = useState(false);
+
+  const handleViewHistory = async (userId: string) => {
+    setHistoryModalUserId(userId);
+    setLoadingHistory(true);
+    try {
+      const history = await getStudentMedicalReviews(userId);
+      setMedicalHistory(history);
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setLoadingHistory(false);
+    }
+  };
 
   useEffect(() => {
     let unsub: any;
@@ -41,26 +63,34 @@ export const OnCampusCounselorDashboard = () => {
       try {
         setLoading(true);
 
+        const auth = await getAuthInstance();
+        const user = auth.currentUser;
+        if (user) {
+          const profile = await getUserProfileById(user.uid);
+          if (profile?.university) {
+            const students = await getStudentsByInstitution(profile.university);
+            setCampusStudents(students);
+          }
+        }
+
         unsub = await listenBookingsForCounselor((list) => {
           console.log('Received bookings for on-campus counselor:', list.length);
           setBookings(list);
           setLoading(false);
 
-          // Load student names
+          // Load student profiles
           list.forEach(async (b) => {
-            if (b.userId && !studentNames[b.userId]) {
+            if (b.userId && !studentProfiles[b.userId]) {
               try {
                 const profile = await getUserProfileById(b.userId);
-                setStudentNames((prev) => ({
-                  ...prev,
-                  [b.userId]: profile?.name || 'Student'
-                }));
+                if (profile) {
+                  setStudentProfiles((prev) => ({
+                    ...prev,
+                    [b.userId]: profile
+                  }));
+                }
               } catch (err) {
                 console.error('Failed to load student profile:', err);
-                setStudentNames((prev) => ({
-                  ...prev,
-                  [b.userId]: 'Student'
-                }));
               }
             }
           });
@@ -134,11 +164,37 @@ export const OnCampusCounselorDashboard = () => {
 
   const filteredBookings = bookings.filter(booking => {
     const matchesStatus = statusFilter === "all" || booking.status === statusFilter;
-    const studentName = studentNames[booking.userId] || 'Student';
+    const profile = studentProfiles[booking.userId];
+    const departmentStr = profile?.department || '';
     const matchesSearch = searchTerm === "" ||
-      studentName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      departmentStr.toLowerCase().includes(searchTerm.toLowerCase()) ||
       booking.status.toLowerCase().includes(searchTerm.toLowerCase());
     return matchesStatus && matchesSearch;
+  });
+
+  const departmentStats = {
+    "Engineering": { students: new Set<string>(), alerts: 0 },
+    "Business": { students: new Set<string>(), alerts: 0 },
+    "Liberal Arts": { students: new Set<string>(), alerts: 0 },
+    "Sciences": { students: new Set<string>(), alerts: 0 }
+  };
+
+  campusStudents.forEach(student => {
+    if (student.department && departmentStats[student.department as keyof typeof departmentStats]) {
+      const dept = student.department as keyof typeof departmentStats;
+      departmentStats[dept].students.add(student.id);
+    }
+  });
+
+  bookings.forEach(b => {
+    const profile = studentProfiles[b.userId] || campusStudents.find(s => s.id === b.userId);
+    if (profile && profile.department && departmentStats[profile.department as keyof typeof departmentStats]) {
+      const dept = profile.department as keyof typeof departmentStats;
+      departmentStats[dept].students.add(b.userId);
+      if (b.isEmergency && b.status === "pending") {
+        departmentStats[dept].alerts++;
+      }
+    }
   });
 
   const getStatusBadgeVariant = (status: string) => {
@@ -227,14 +283,7 @@ export const OnCampusCounselorDashboard = () => {
               <span className="bg-gradient-to-r from-orange-600 to-pink-600 bg-clip-text text-transparent">Session Management</span>
             </CardTitle>
             <div className="flex flex-col sm:flex-row gap-3 mt-4">
-              <div className="flex-1">
-                <Input
-                  placeholder="Search by student name or status..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full"
-                />
-              </div>
+
               <select
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value)}
@@ -302,7 +351,7 @@ export const OnCampusCounselorDashboard = () => {
                       </div>
                       <div className="flex-1">
                         <div className="flex items-center gap-2 mb-1">
-                          <p className="font-semibold text-gray-900">{studentNames[b.userId] || 'Student'}</p>
+                          <p className="font-semibold text-gray-900">Anonymous Student</p>
                           <Badge variant={getStatusBadgeVariant(b.status)} className="text-xs">
                             {getStatusIcon(b.status)}
                             <span className="ml-1 capitalize">{b.status}</span>
@@ -329,6 +378,10 @@ export const OnCampusCounselorDashboard = () => {
                           Emergency
                         </span>
                       )}
+                      <Button size="sm" variant="outline" onClick={() => handleViewHistory(b.userId)} className="text-xs">
+                        <FaClipboardList className="mr-1" />
+                        Medical History
+                      </Button>
                     </div>
                   </div>
 
@@ -469,77 +522,7 @@ export const OnCampusCounselorDashboard = () => {
         </Card>
 
         {/* Original Dashboard Cards */}
-        <Card className="border-0 shadow-2xl bg-white/90 backdrop-blur-sm rounded-3xl relative overflow-hidden">
-          <div className="absolute inset-0 bg-gradient-to-br from-orange-100/30 via-red-100/20 to-pink-100/30"></div>
-          <CardHeader className="relative z-10">
-            <CardTitle className="flex items-center gap-3 text-lg font-bold text-gray-900">
-              <div className="w-10 h-10 bg-gradient-to-br from-orange-500 via-red-500 to-pink-500 rounded-xl flex items-center justify-center shadow-lg">
-                <FaUsers className="w-5 h-5 text-white" />
-              </div>
-              <span className="bg-gradient-to-r from-orange-600 to-pink-600 bg-clip-text text-transparent">Campus Users</span>
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="relative z-10 text-center">
-            <div className="relative w-20 h-20 mx-auto mb-4">
-              <div className="w-20 h-20 bg-gradient-to-r from-orange-500 to-pink-500 rounded-full flex items-center justify-center shadow-lg">
-                <p className="text-xl font-bold text-white">1.2K</p>
-              </div>
-              <div className="absolute -top-2 -right-2 w-6 h-6 bg-gradient-to-r from-yellow-400 to-orange-400 rounded-full flex items-center justify-center">
-                <FaStar className="w-3 h-3 text-white" />
-              </div>
-            </div>
-            <p className="text-sm text-gray-600 font-medium">Total students</p>
-            <p className="text-xs text-orange-600 mt-1">Active this semester</p>
-          </CardContent>
-        </Card>
 
-        <Card className="border-0 shadow-2xl bg-white/90 backdrop-blur-sm rounded-3xl relative overflow-hidden">
-          <div className="absolute inset-0 bg-gradient-to-br from-green-100/30 via-emerald-100/20 to-teal-100/30"></div>
-          <CardHeader className="relative z-10">
-            <CardTitle className="flex items-center gap-3 text-lg font-bold text-gray-900">
-              <div className="w-10 h-10 bg-gradient-to-br from-green-500 via-emerald-500 to-teal-500 rounded-xl flex items-center justify-center shadow-lg">
-                <FaChartLine className="w-5 h-5 text-white" />
-              </div>
-              <span className="bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent">Weekly Growth</span>
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="relative z-10 text-center">
-            <div className="relative w-20 h-20 mx-auto mb-4">
-              <div className="w-20 h-20 bg-gradient-to-r from-green-500 to-emerald-500 rounded-full flex items-center justify-center shadow-lg">
-                <p className="text-xl font-bold text-white">+12%</p>
-              </div>
-              <div className="absolute -top-2 -right-2 w-6 h-6 bg-gradient-to-r from-yellow-400 to-green-400 rounded-full flex items-center justify-center">
-                <FaRocket className="w-3 h-3 text-white" />
-              </div>
-            </div>
-            <p className="text-sm text-gray-600 font-medium">Engagement</p>
-            <p className="text-xs text-green-600 mt-1">Growing strong! 📈</p>
-          </CardContent>
-        </Card>
-
-        <Card className="border-0 shadow-2xl bg-white/90 backdrop-blur-sm rounded-3xl relative overflow-hidden">
-          <div className="absolute inset-0 bg-gradient-to-br from-red-100/30 via-orange-100/20 to-yellow-100/30"></div>
-          <CardHeader className="relative z-10">
-            <CardTitle className="flex items-center gap-3 text-lg font-bold text-gray-900">
-              <div className="w-10 h-10 bg-gradient-to-br from-red-500 via-orange-500 to-yellow-500 rounded-xl flex items-center justify-center shadow-lg">
-                <FaExclamationTriangle className="w-5 h-5 text-white" />
-              </div>
-              <span className="bg-gradient-to-r from-red-600 to-orange-600 bg-clip-text text-transparent">Crisis Alerts</span>
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="relative z-10 text-center">
-            <div className="relative w-20 h-20 mx-auto mb-4">
-              <div className="w-20 h-20 bg-gradient-to-r from-red-500 to-orange-500 rounded-full flex items-center justify-center shadow-lg">
-                <p className="text-xl font-bold text-white">3</p>
-              </div>
-              <div className="absolute -top-2 -right-2 w-6 h-6 bg-gradient-to-r from-yellow-400 to-red-400 rounded-full flex items-center justify-center">
-                <FaShieldAlt className="w-3 h-3 text-white" />
-              </div>
-            </div>
-            <p className="text-sm text-gray-600 font-medium">Requires attention</p>
-            <p className="text-xs text-red-600 mt-1">Priority cases</p>
-          </CardContent>
-        </Card>
 
         <Card className="md:col-span-2 border-0 shadow-2xl bg-white/90 backdrop-blur-sm rounded-3xl relative overflow-hidden">
           <div className="absolute inset-0 bg-gradient-to-br from-purple-100/30 via-pink-100/20 to-orange-100/30"></div>
@@ -559,7 +542,7 @@ export const OnCampusCounselorDashboard = () => {
                 </div>
                 <span className="font-semibold text-gray-900">Engineering</span>
               </div>
-              <p className="text-sm text-gray-600">Wellness 68% • Alerts 2</p>
+              <p className="text-sm text-gray-600">Active Students: {departmentStats["Engineering"].students.size} • Pending Alerts: {departmentStats["Engineering"].alerts}</p>
             </div>
             <div className="p-4 rounded-2xl border-2 bg-gradient-to-r from-green-50 to-emerald-50 border-green-200/50 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
               <div className="flex items-center gap-3 mb-2">
@@ -568,7 +551,7 @@ export const OnCampusCounselorDashboard = () => {
                 </div>
                 <span className="font-semibold text-gray-900">Business</span>
               </div>
-              <p className="text-sm text-gray-600">Wellness 76% • Alerts 0</p>
+              <p className="text-sm text-gray-600">Active Students: {departmentStats["Business"].students.size} • Pending Alerts: {departmentStats["Business"].alerts}</p>
             </div>
             <div className="p-4 rounded-2xl border-2 bg-gradient-to-r from-purple-50 to-pink-50 border-purple-200/50 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
               <div className="flex items-center gap-3 mb-2">
@@ -577,7 +560,7 @@ export const OnCampusCounselorDashboard = () => {
                 </div>
                 <span className="font-semibold text-gray-900">Liberal Arts</span>
               </div>
-              <p className="text-sm text-gray-600">Wellness 79% • Alerts 1</p>
+              <p className="text-sm text-gray-600">Active Students: {departmentStats["Liberal Arts"].students.size} • Pending Alerts: {departmentStats["Liberal Arts"].alerts}</p>
             </div>
             <div className="p-4 rounded-2xl border-2 bg-gradient-to-r from-orange-50 to-red-50 border-orange-200/50 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
               <div className="flex items-center gap-3 mb-2">
@@ -586,7 +569,7 @@ export const OnCampusCounselorDashboard = () => {
                 </div>
                 <span className="font-semibold text-gray-900">Sciences</span>
               </div>
-              <p className="text-sm text-gray-600">Wellness 71% • Alerts 0</p>
+              <p className="text-sm text-gray-600">Active Students: {departmentStats["Sciences"].students.size} • Pending Alerts: {departmentStats["Sciences"].alerts}</p>
             </div>
           </CardContent>
         </Card>
@@ -680,6 +663,33 @@ export const OnCampusCounselorDashboard = () => {
           </CardContent>
         </Card>
       </main>
+
+      {/* Medical History Modal */}
+      <Dialog open={!!historyModalUserId} onOpenChange={(open) => !open && setHistoryModalUserId(null)}>
+        <DialogContent className="max-w-xl">
+          <DialogHeader>
+            <DialogTitle>Anonymous Student - Medical History</DialogTitle>
+            <DialogDescription>Past feedback and notes from counselors</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-2">
+            {loadingHistory ? (
+              <div className="text-center py-4 text-gray-500">Loading history...</div>
+            ) : medicalHistory.length === 0 ? (
+              <div className="text-center py-4 text-gray-500">No past medical reviews found for this student.</div>
+            ) : (
+              medicalHistory.map((review) => (
+                <div key={review.id} className="p-4 bg-gray-50 rounded-lg border border-gray-200">
+                  <div className="flex justify-between items-start mb-2">
+                    <span className="font-semibold text-sm text-gray-900">{review.counselorName}</span>
+                    <span className="text-xs text-gray-500">{new Date(review.date).toLocaleDateString()}</span>
+                  </div>
+                  <p className="text-sm text-gray-700 whitespace-pre-wrap">{review.notes}</p>
+                </div>
+              ))
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

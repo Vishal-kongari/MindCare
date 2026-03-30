@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { getName, clearAuth } from "@/lib/auth";
 import { signOutUser } from "@/services/auth";
 import { useNavigate } from "react-router-dom";
-import { Brain, Calendar, Star, Target, MessageCircle, BookOpen, Users, Smile, Music, Moon, PlayCircle, Book, Clock, User } from "lucide-react";
+import { Brain, Calendar, Star, Target, MessageCircle, BookOpen, Users, Smile, Music, Moon, PlayCircle, Book, Clock, User, Activity } from "lucide-react";
 import { FaBrain, FaHeart, FaLeaf, FaFire, FaRocket, FaGem, FaSun, FaMoon, FaStar, FaTrophy, FaGamepad, FaBook, FaUsers, FaComments, FaCalendarAlt, FaChartLine, FaBullseye, FaLightbulb, FaMagic, FaRainbow, FaPalette, FaInfinity } from "react-icons/fa";
 import { GiMeditation, GiFlowerPot, GiButterfly, GiTreeBranch, GiWaterDrop, GiSunrise, GiSunset, GiCrystalBall, GiMagicSwirl, GiStarFormation, GiHeartWings, GiPeaceDove, GiLotus, GiYinYang } from "react-icons/gi";
 import { MdSelfImprovement, MdPsychology, MdNature, MdSpa, MdHealing, MdFavorite, MdEmojiNature, MdAutoAwesome, MdTrendingUp, MdInsights, MdExplore, MdCelebration, MdLocalFlorist, MdWbSunny, MdNightlight } from "react-icons/md";
@@ -12,6 +12,8 @@ import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { getAuthInstance } from "@/lib/firebase";
 import { listenToTracking, logMood, incrementWeeklyGoal, incrementHabit, type UserTracking } from "@/services/tracking";
+import { checkSurveyRequired, getLatestSurveyResponse, type SurveyResponseData } from "@/services/survey";
+import { MentalHealthSurvey } from "@/components/survey/MentalHealthSurvey";
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -47,6 +49,35 @@ export const StudentDashboard = () => {
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [tracking, setTracking] = useState<UserTracking | null>(null);
   const [loadingTracking, setLoadingTracking] = useState(true);
+  const [userId, setUserId] = useState<string | null>(null);
+  const [showSurvey, setShowSurvey] = useState(false);
+  const [latestSurvey, setLatestSurvey] = useState<SurveyResponseData | null>(null);
+
+  const calculateScores = () => {
+    if (!latestSurvey) return { mental: 0, stress: 0, lifestyle: 0, overall: 0 };
+
+    // Mental Health (Section A + B)
+    // Section A (0-18), Section B (0-12) Total 30.
+    const mhSum = latestSurvey.sectionA.reduce((sum, v) => sum + (v >= 0 ? v : 0), 0) +
+      latestSurvey.sectionB.reduce((sum, v) => sum + (v >= 0 ? v : 0), 0);
+    const mentalScore = Math.max(0, Math.round(100 - (mhSum / 30) * 100));
+
+    // Stress (Section C)
+    const stressSum = latestSurvey.sectionC.reduce((sum, v) => sum + (v >= 0 ? v : 0), 0);
+    const stressScore = Math.max(0, Math.round(100 - (stressSum / 20) * 100));
+
+    // Lifestyle (Section D)
+    const sleep = latestSurvey.sectionD?.[0] || 0;
+    const exercise = latestSurvey.sectionD?.[1] || 0;
+    const sleepScore = sleep >= 7 ? 50 : (sleep / 7) * 50;
+    const exerciseScore = exercise >= 3 ? 50 : (exercise / 3) * 50;
+    const lifestyleScore = Math.min(100, Math.round(sleepScore + exerciseScore));
+
+    const overall = Math.round((mentalScore + stressScore + lifestyleScore) / 3);
+    return { mental: mentalScore, stress: stressScore, lifestyle: lifestyleScore, overall };
+  };
+
+  const surveyScores = calculateScores();
 
   useEffect(() => {
     let unsubBookings: any;
@@ -55,6 +86,14 @@ export const StudentDashboard = () => {
     (async () => {
       const auth = await getAuthInstance();
       const user = auth.currentUser;
+      if (user) {
+        setUserId(user.uid);
+        const required = await checkSurveyRequired(user.uid);
+        setShowSurvey(required);
+
+        const surveyData = await getLatestSurveyResponse(user.uid);
+        setLatestSurvey(surveyData);
+      }
 
       unsubBookings = await listenBookingsForStudent((list) => {
         setBookings(list);
@@ -106,6 +145,12 @@ export const StudentDashboard = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 via-blue-50 to-indigo-100 relative overflow-hidden">
+      {showSurvey && userId && (
+        <MentalHealthSurvey
+          userId={userId}
+          onComplete={() => setShowSurvey(false)}
+        />
+      )}
       {/* Animated background elements */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-10 left-10 w-20 h-20 bg-gradient-to-r from-pink-300 to-purple-300 rounded-full opacity-20 animate-pulse"></div>
@@ -144,6 +189,13 @@ export const StudentDashboard = () => {
           </div>
           <div className="flex items-center gap-3">
             <Button
+              onClick={() => setShowSurvey(true)}
+              className="bg-gradient-to-r from-teal-500 to-emerald-500 text-white hover:from-teal-600 hover:to-emerald-600 transition-all duration-300 shadow-md hover:shadow-lg transform hover:-translate-y-0.5 hidden sm:flex"
+            >
+              <Activity className="w-4 h-4 mr-2" />
+              Retake Check-in
+            </Button>
+            <Button
               onClick={() => navigate('/profile')}
               className="bg-gradient-to-r from-purple-600 to-blue-600 text-white hover:from-purple-700 hover:to-blue-700 transition-all duration-300 shadow-md hover:shadow-lg transform hover:-translate-y-0.5"
             >
@@ -168,7 +220,7 @@ export const StudentDashboard = () => {
               <div className="w-12 h-12 bg-gradient-to-br from-purple-500 via-pink-500 to-blue-500 rounded-xl flex items-center justify-center shadow-lg transform hover:scale-105 transition-transform duration-300">
                 <FaBullseye className="w-6 h-6 text-white" />
               </div>
-              <span className="bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">{t('dashboard.student.goals.title')}</span>
+              <span className="bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">Bi-Weekly Survey Insights</span>
             </CardTitle>
           </CardHeader>
           <CardContent className="relative z-10">
@@ -176,49 +228,46 @@ export const StudentDashboard = () => {
               {/* Goals */}
               <div
                 className="p-6 rounded-2xl bg-gradient-to-br from-blue-50 via-cyan-50 to-blue-100 border-2 border-blue-200/50 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 relative overflow-hidden cursor-pointer"
-                onClick={() => handleGoalClick('mindfulness')}
               >
                 <div className="absolute top-0 right-0 w-16 h-16 bg-gradient-to-br from-blue-300/20 to-cyan-300/20 rounded-full -translate-y-8 translate-x-8"></div>
                 <div className="relative z-10">
                   <div className="flex items-center gap-2 mb-3">
-                    <GiMeditation className="w-5 h-5 text-blue-600" />
-                    <p className="text-sm text-blue-600 font-semibold">{t('dashboard.student.goals.mindfulness')}</p>
+                    <FaBrain className="w-5 h-5 text-blue-600" />
+                    <p className="text-sm text-blue-600 font-semibold">Mental Wellbeing</p>
                   </div>
-                  <p className="text-3xl font-bold text-blue-700 mb-2">{tracking?.weeklyGoals.mindfulness.current || 0}/{tracking?.weeklyGoals.mindfulness.target || 5}</p>
+                  <p className="text-3xl font-bold text-blue-700 mb-2">{latestSurvey ? surveyScores.mental + '%' : '--'}</p>
                   <div className="w-full bg-blue-200 rounded-full h-3 shadow-inner">
-                    <div className="bg-gradient-to-r from-blue-500 to-cyan-500 h-3 rounded-full shadow-lg transition-all duration-500" style={{ width: `${Math.min(100, ((tracking?.weeklyGoals.mindfulness.current || 0) / (tracking?.weeklyGoals.mindfulness.target || 5)) * 100)}%` }}></div>
+                    <div className="bg-gradient-to-r from-blue-500 to-cyan-500 h-3 rounded-full shadow-lg transition-all duration-500" style={{ width: `${surveyScores.mental}%` }}></div>
                   </div>
                 </div>
               </div>
               <div
                 className="p-6 rounded-2xl bg-gradient-to-br from-green-50 via-emerald-50 to-green-100 border-2 border-green-200/50 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 relative overflow-hidden cursor-pointer"
-                onClick={() => handleGoalClick('checkins')}
               >
                 <div className="absolute top-0 right-0 w-16 h-16 bg-gradient-to-br from-green-300/20 to-emerald-300/20 rounded-full -translate-y-8 translate-x-8"></div>
                 <div className="relative z-10">
                   <div className="flex items-center gap-2 mb-3">
-                    <FaHeart className="w-5 h-5 text-green-600" />
-                    <p className="text-sm text-green-600 font-semibold">{t('dashboard.student.goals.checkins')}</p>
+                    <FaLeaf className="w-5 h-5 text-green-600" />
+                    <p className="text-sm text-green-600 font-semibold">Stress Control</p>
                   </div>
-                  <p className="text-3xl font-bold text-green-700 mb-2">{tracking?.weeklyGoals.checkins.current || 0}/{tracking?.weeklyGoals.checkins.target || 7}</p>
+                  <p className="text-3xl font-bold text-green-700 mb-2">{latestSurvey ? surveyScores.stress + '%' : '--'}</p>
                   <div className="w-full bg-green-200 rounded-full h-3 shadow-inner">
-                    <div className="bg-gradient-to-r from-green-500 to-emerald-500 h-3 rounded-full shadow-lg transition-all duration-500" style={{ width: `${Math.min(100, ((tracking?.weeklyGoals.checkins.current || 0) / (tracking?.weeklyGoals.checkins.target || 7)) * 100)}%` }}></div>
+                    <div className="bg-gradient-to-r from-green-500 to-emerald-500 h-3 rounded-full shadow-lg transition-all duration-500" style={{ width: `${surveyScores.stress}%` }}></div>
                   </div>
                 </div>
               </div>
               <div
                 className="p-6 rounded-2xl bg-gradient-to-br from-purple-50 via-pink-50 to-purple-100 border-2 border-purple-200/50 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 relative overflow-hidden cursor-pointer"
-                onClick={() => handleGoalClick('peerSupport')}
               >
                 <div className="absolute top-0 right-0 w-16 h-16 bg-gradient-to-br from-purple-300/20 to-pink-300/20 rounded-full -translate-y-8 translate-x-8"></div>
                 <div className="relative z-10">
                   <div className="flex items-center gap-2 mb-3">
-                    <FaUsers className="w-5 h-5 text-purple-600" />
-                    <p className="text-sm text-purple-600 font-semibold">{t('dashboard.student.goals.peer')}</p>
+                    <FaHeart className="w-5 h-5 text-purple-600" />
+                    <p className="text-sm text-purple-600 font-semibold">Physical Habits</p>
                   </div>
-                  <p className="text-3xl font-bold text-purple-700 mb-2">{tracking?.weeklyGoals.peerSupport.current || 0}/{tracking?.weeklyGoals.peerSupport.target || 3}</p>
+                  <p className="text-3xl font-bold text-purple-700 mb-2">{latestSurvey ? surveyScores.lifestyle + '%' : '--'}</p>
                   <div className="w-full bg-purple-200 rounded-full h-3 shadow-inner">
-                    <div className="bg-gradient-to-r from-purple-500 to-pink-500 h-3 rounded-full shadow-lg transition-all duration-500" style={{ width: `${Math.min(100, ((tracking?.weeklyGoals.peerSupport.current || 0) / (tracking?.weeklyGoals.peerSupport.target || 3)) * 100)}%` }}></div>
+                    <div className="bg-gradient-to-r from-purple-500 to-pink-500 h-3 rounded-full shadow-lg transition-all duration-500" style={{ width: `${surveyScores.lifestyle}%` }}></div>
                   </div>
                 </div>
               </div>
@@ -232,7 +281,7 @@ export const StudentDashboard = () => {
               <div className="w-12 h-12 bg-gradient-to-br from-yellow-500 via-orange-500 to-red-500 rounded-xl flex items-center justify-center shadow-lg transform hover:scale-105 transition-transform duration-300">
                 <FaTrophy className="w-6 h-6 text-white" />
               </div>
-              <span className="bg-gradient-to-r from-yellow-600 to-orange-600 bg-clip-text text-transparent">{t('dashboard.student.progress.title')}</span>
+              <span className="bg-gradient-to-r from-yellow-600 to-orange-600 bg-clip-text text-transparent">Overall Wellness Score</span>
             </CardTitle>
           </CardHeader>
           <CardContent className="relative z-10">
@@ -249,23 +298,23 @@ export const StudentDashboard = () => {
                   <circle cx="50" cy="50" r="40" stroke="#e5e7eb" strokeWidth="8" fill="none" />
                   <circle cx="50" cy="50" r="40" stroke="url(#progressGradient)" strokeWidth="8" fill="none"
                     strokeDasharray="251.2"
-                    strokeDashoffset={251.2 - (251.2 * Math.min(100, tracking?.progressScore || 0) / 100)}
+                    strokeDashoffset={251.2 - (251.2 * Math.min(100, surveyScores.overall || 0) / 100)}
                     strokeLinecap="round"
                     className="transition-all duration-1000 ease-out"
                   />
                 </svg>
                 <div className="absolute inset-0 flex items-center justify-center">
                   <div className="text-center">
-                    <p className="text-3xl font-bold bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent">{tracking?.progressScore || 0}</p>
+                    <p className="text-3xl font-bold bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent">{latestSurvey ? surveyScores.overall : '--'}</p>
                     <p className="text-xs text-gray-500 font-medium">Score</p>
-                    <p className="text-xs text-orange-500 font-bold mt-1">🔥 {tracking?.streak || 0} Day Streak</p>
+                    <p className="text-xs text-orange-500 font-bold mt-1">Based on survey</p>
                   </div>
                 </div>
               </div>
               <div className="space-y-2">
                 <p className="text-sm text-gray-600 font-semibold flex items-center justify-center gap-2">
                   <GiStarFormation className="w-4 h-4 text-yellow-500" />
-                  {t('dashboard.student.progress.score')}
+                  Your Mental Wellbeing
                 </p>
                 <div className="flex items-center justify-center gap-1">
                   <FaStar className="w-3 h-3 text-yellow-400" />
@@ -408,157 +457,16 @@ export const StudentDashboard = () => {
           </CardContent>
         </MotionCard>
         <LiveSessionsSection />
-        <MotionCard variants={itemVariants} className="md:col-span-2 border-0 shadow-large bg-card/70 backdrop-blur">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Smile className="w-5 h-5 text-accent" /> Mood Check-in
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex gap-3">
-              <Button onClick={() => handleMoodClick('good')} variant="soft" className="hover:scale-105 transition-transform"><Smile className="w-4 h-4 mr-2" /> Good</Button>
-              <Button onClick={() => handleMoodClick('okay')} variant="outline" className="hover:scale-105 transition-transform">Okay</Button>
-              <Button onClick={() => handleMoodClick('stressed')} variant="outline" className="hover:scale-105 transition-transform">Stressed</Button>
-            </div>
 
-            {tracking && tracking.moodHistory.length > 0 && (
-              <div className="mt-4 pt-4 border-t text-sm text-gray-500">
-                You checked in <span className="font-semibold text-gray-700">{tracking.moodHistory.length} times</span> recently. Keep it up!
-              </div>
-            )}
-          </CardContent>
-        </MotionCard>
-        <MotionCard variants={itemVariants} className="border-0 shadow-large bg-card/70 backdrop-blur">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Music className="w-5 h-5 text-secondary" /> Personalized Tips
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-2">
-            <div className="p-3 rounded-lg bg-secondary-soft">Try a 5‑minute breathing exercise between classes.</div>
-            <div className="p-3 rounded-lg bg-primary-soft">Listen to your focus playlist for 20 minutes.</div>
-            <div className="p-3 rounded-lg bg-accent-soft">Write 3 lines of gratitude before bed.</div>
-          </CardContent>
-        </MotionCard>
 
-        {/* Mindful Media: short videos */}
-        <MotionCard variants={itemVariants} className="md:col-span-2 border-0 shadow-large bg-card/70 backdrop-blur">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <PlayCircle className="w-5 h-5 text-primary" /> Mindful Media
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="aspect-video rounded-xl overflow-hidden border">
-                <iframe
-                  className="w-full h-full"
-                  src="https://www.youtube.com/embed/1vx8iUvfyCY"
-                  title="Guided Meditation for Beginners"
-                  frameBorder="0"
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                  allowFullScreen
-                />
-              </div>
-              <div className="aspect-video rounded-xl overflow-hidden border">
-                <iframe
-                  className="w-full h-full"
-                  src="https://www.youtube.com/embed/inpok4MKVLM"
-                  title="5-Minute Mindfulness Meditation"
-                  frameBorder="0"
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                  allowFullScreen
-                />
-              </div>
-              <div className="aspect-video rounded-xl overflow-hidden border">
-                <iframe
-                  className="w-full h-full"
-                  src="https://www.youtube.com/embed/ZXsQAXx_ao0"
-                  title="Motivational: Just Do It (Parody with a powerful message)"
-                  frameBorder="0"
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                  allowFullScreen
-                />
-              </div>
-              <div className="aspect-video rounded-xl overflow-hidden border">
-                <iframe
-                  className="w-full h-full"
-                  src="https://www.youtube.com/embed/UNQhuFL6CWg"
-                  title="Study Motivation — The Mindset for Success"
-                  frameBorder="0"
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                  allowFullScreen
-                />
-              </div>
-            </div>
-            <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <a className="p-3 rounded-xl border hover:bg-muted/40 transition" href="https://www.youtube.com/watch?v=mgmVOuLgFB0" target="_blank" rel="noreferrer">How to Believe in Yourself – Jim Cathcart (TEDx)</a>
-              <a className="p-3 rounded-xl border hover:bg-muted/40 transition" href="https://www.youtube.com/watch?v=2Lz0VOltZKA" target="_blank" rel="noreferrer">Grit: The Power of Passion and Perseverance – Angela Duckworth</a>
-              <a className="p-3 rounded-xl border hover:bg-muted/40 transition" href="https://www.youtube.com/watch?v=H14bBuluwB8" target="_blank" rel="noreferrer">The Puzzle of Motivation – Dan Pink</a>
-              <a className="p-3 rounded-xl border hover:bg-muted/40 transition" href="https://www.youtube.com/watch?v=5MgBikgcWnY" target="_blank" rel="noreferrer">The First 20 Hours — How to Learn Anything – Josh Kaufman</a>
-            </div>
-          </CardContent>
-        </MotionCard>
+
+
+
 
         {/* Inspirational Verses */}
-        <MotionCard variants={itemVariants} className="border-0 shadow-large bg-card/70 backdrop-blur">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Book className="w-5 h-5 text-accent" /> Inspirational Verses
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <div className="p-4 rounded-xl bg-accent-soft">
-              <p className="text-sm font-medium">Bhagavad Gītā 2.47</p>
-              <p className="text-sm text-muted-foreground mt-1">Karmany evādhikāras te mā phaleṣu kadācana. Mā karma-phala-hetur bhūr mā te saṅgo 'stv akarmaṇi.</p>
-              <p className="text-xs mt-2">Focus on your actions, not on the results—let this reduce stress from outcomes.</p>
-            </div>
-            <div className="p-4 rounded-xl bg-secondary-soft">
-              <p className="text-sm font-medium">Bhagavad Gītā 6.26</p>
-              <p className="text-sm text-muted-foreground mt-1">Yato yato niścarati manaś cañcalam asthiram, tatas tato niyamyaitad ātmany eva vaśaṁ nayet.</p>
-              <p className="text-xs mt-2">When the mind wanders, gently bring it back—useful for mindful study breaks.</p>
-            </div>
-            <div className="p-4 rounded-xl bg-primary-soft">
-              <p className="text-sm font-medium">Bhagavad Gītā 12.15</p>
-              <p className="text-sm text-muted-foreground mt-1">Yasmān nodvijate loko lokān nodvijate ca yaḥ...</p>
-              <p className="text-xs mt-2">Cultivate calm and compassion—create a supportive peer environment.</p>
-            </div>
-          </CardContent>
-        </MotionCard>
-        <MotionCard variants={itemVariants} className="md:col-span-2 border-0 shadow-large bg-card/70 backdrop-blur">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Users className="w-5 h-5 text-primary" /> Announcements
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <div className="p-3 rounded-lg bg-primary-soft">Campus Mental Health Week starts Monday.</div>
-            <div className="p-3 rounded-lg bg-secondary-soft">Join the peer-support circle this Friday.</div>
-          </CardContent>
-        </MotionCard>
-        <MotionCard variants={itemVariants} className="border-0 shadow-large bg-card/70 backdrop-blur">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Target className="w-5 h-5 text-success" /> Habits Tracker
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-2">
-            <div
-              className="flex items-center justify-between p-2 rounded hover:bg-muted/50 transition cursor-pointer"
-              onClick={() => handleHabitClick('meditation')}
-            >
-              <span className="text-sm">10-min Meditation</span>
-              <span className="text-xs text-muted-foreground">{tracking?.habits.meditation.current || 0}/{tracking?.habits.meditation.target || 7}</span>
-            </div>
-            <div
-              className="flex items-center justify-between p-2 rounded hover:bg-muted/50 transition cursor-pointer"
-              onClick={() => handleHabitClick('journal')}
-            >
-              <span className="text-sm">Daily Journal</span>
-              <span className="text-xs text-muted-foreground">{tracking?.habits.journal.current || 0}/{tracking?.habits.journal.target || 7}</span>
-            </div>
-          </CardContent>
-        </MotionCard>
+
+
+
       </motion.main>
       <PopupChat isOpen={isChatOpen} onClose={() => setIsChatOpen(false)} />
     </div>

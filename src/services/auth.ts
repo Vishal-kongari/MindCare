@@ -24,11 +24,18 @@ export const fetchRole = async (uid: string): Promise<{ role: AppRole, name: str
   return { role: 'student', name: '' };
 };
 
-export const ensureProfile = async (uid: string, email: string, role: AppRole, name: string, phoneNumber?: string, additionalData?: any) => {
+export const ensureProfile = async (uid: string, email: string, role: AppRole, name: string, phoneNumber?: string, university?: string, department?: string, additionalData?: any) => {
   const db = await getDb();
   const profileData: any = { email, role, name, ...additionalData };
+  Object.keys(profileData).forEach(key => profileData[key] === undefined && delete profileData[key]);
   if (phoneNumber) {
     profileData.phoneNumber = phoneNumber;
+  }
+  if (university) {
+    profileData.university = university;
+  }
+  if (department) {
+    profileData.department = department;
   }
   await setDoc(doc(db, 'users', uid), profileData, { merge: true });
 };
@@ -41,12 +48,12 @@ export const signInEmail = async (email: string, password: string): Promise<AppU
   return { id: cred.user.uid, email: cred.user.email || email, role, name: finalName };
 };
 
-export const signUpEmail = async (email: string, password: string, role: AppRole, displayName?: string, phoneNumber?: string, additionalData?: any): Promise<AppUser> => {
+export const signUpEmail = async (email: string, password: string, role: AppRole, displayName?: string, phoneNumber?: string, university?: string, department?: string, additionalData?: any): Promise<AppUser> => {
   try {
     const auth = await getAuthInstance();
     const cred = await createUserWithEmailAndPassword(auth, email, password);
     const name = (displayName && displayName.trim()) ? displayName.trim() : email.split('@')[0];
-    await ensureProfile(cred.user.uid, email, role, name, phoneNumber, additionalData);
+    await ensureProfile(cred.user.uid, email, role, name, phoneNumber, university, department, additionalData);
     return { id: cred.user.uid, email, role, name };
   } catch (error: any) {
     console.error("SignUp Error Details:", error);

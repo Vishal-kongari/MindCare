@@ -20,10 +20,11 @@ const itemVariants = {
   hidden: { opacity: 0, y: 30 },
   visible: { opacity: 1, y: 0, transition: { duration: 0.5 } }
 };
-import { acceptBooking, getUserProfileById, listenBookingsForCounselor, rejectBooking, completeSession, debugCounselorBookings, fixCounselorIdMismatch, createTestBooking, assignPendingBookingsToCounselor, type Booking } from "@/services/bookings";
+import { acceptBooking, getUserProfileById, listenBookingsForCounselor, rejectBooking, completeSession, debugCounselorBookings, fixCounselorIdMismatch, createTestBooking, assignPendingBookingsToCounselor, getStudentMedicalReviews, type MedicalReview, type Booking } from "@/services/bookings";
 import { debugGlobalBookings } from "@/lib/debugBookings";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { testFirebaseConnection } from "@/lib/firebaseTest";
@@ -45,6 +46,22 @@ export const CounselorDashboard = () => {
   const [error, setError] = useState<string | null>(null);
   const [showNotesInput, setShowNotesInput] = useState<string | null>(null);
   const [sessionNotes, setSessionNotes] = useState("");
+  const [historyModalUserId, setHistoryModalUserId] = useState<string | null>(null);
+  const [medicalHistory, setMedicalHistory] = useState<MedicalReview[]>([]);
+  const [loadingHistory, setLoadingHistory] = useState(false);
+
+  const handleViewHistory = async (userId: string) => {
+    setHistoryModalUserId(userId);
+    setLoadingHistory(true);
+    try {
+      const history = await getStudentMedicalReviews(userId);
+      setMedicalHistory(history);
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setLoadingHistory(false);
+    }
+  };
 
   useEffect(() => {
     let unsub: any;
@@ -428,6 +445,10 @@ export const CounselorDashboard = () => {
                           Emergency
                         </span>
                       )}
+                      <Button size="sm" variant="outline" onClick={() => handleViewHistory(b.userId)} className="text-xs">
+                        <FaClipboardList className="mr-1" />
+                        Medical History
+                      </Button>
                     </div>
                   </div>
                   <div className="mt-3 space-y-3">
@@ -693,6 +714,33 @@ export const CounselorDashboard = () => {
           </CardContent>
         </MotionCard>
       </motion.main>
+
+      {/* Medical History Modal */}
+      <Dialog open={!!historyModalUserId} onOpenChange={(open) => !open && setHistoryModalUserId(null)}>
+        <DialogContent className="max-w-xl">
+          <DialogHeader>
+            <DialogTitle>Anonymous Student - Medical History</DialogTitle>
+            <DialogDescription>Past feedback and notes from counselors</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-2">
+            {loadingHistory ? (
+              <div className="text-center py-4 text-gray-500">Loading history...</div>
+            ) : medicalHistory.length === 0 ? (
+              <div className="text-center py-4 text-gray-500">No past medical reviews found for this student.</div>
+            ) : (
+              medicalHistory.map((review) => (
+                <div key={review.id} className="p-4 bg-gray-50 rounded-lg border border-gray-200">
+                  <div className="flex justify-between items-start mb-2">
+                    <span className="font-semibold text-sm text-gray-900">{review.counselorName}</span>
+                    <span className="text-xs text-gray-500">{new Date(review.date).toLocaleDateString()}</span>
+                  </div>
+                  <p className="text-sm text-gray-700 whitespace-pre-wrap">{review.notes}</p>
+                </div>
+              ))
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

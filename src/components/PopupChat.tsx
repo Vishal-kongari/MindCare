@@ -3,6 +3,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { MessageCircle, X, Send, Bot, User, Minimize2, Maximize2, AlertTriangle, Phone, Mail, CheckCircle } from "lucide-react";
+import { getAuthInstance, getDb } from "@/lib/firebase";
+import { onAuthStateChanged } from "firebase/auth";
+import { doc, getDoc } from "firebase/firestore";
 
 interface ChatMessage {
     id: string;
@@ -224,7 +227,6 @@ const PopupChat = ({ isOpen, onClose }: PopupChatProps) => {
     const [loading, setLoading] = useState(false);
     const [isMinimized, setIsMinimized] = useState(false);
     const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
-    const [showProfileSetup, setShowProfileSetup] = useState(false);
     const [lastAlertTime, setLastAlertTime] = useState<number>(0);
     const [showAlert, setShowAlert] = useState(false);
     const [alertMessage, setAlertMessage] = useState('');
@@ -235,7 +237,7 @@ const PopupChat = ({ isOpen, onClose }: PopupChatProps) => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     }, [messages]);
 
-    // Load conversation and profile from localStorage on mount
+    // Load conversation and profile on mount
     useEffect(() => {
         const saved = localStorage.getItem('gemini-chat-conversation');
         if (saved) {
@@ -250,29 +252,34 @@ const PopupChat = ({ isOpen, onClose }: PopupChatProps) => {
             }
         }
 
-        const savedProfile = localStorage.getItem('gemini-chat-profile');
-        if (savedProfile) {
-            try {
-                setUserProfile(JSON.parse(savedProfile));
-            } catch (error) {
-                console.error('Error loading user profile:', error);
-            }
-        } else {
-            setShowProfileSetup(true);
-        }
+        let unsubscribe = () => {};
+        getAuthInstance().then((auth) => {
+            unsubscribe = onAuthStateChanged(auth, async (user) => {
+                if (user) {
+                    const db = await getDb();
+                    const snap = await getDoc(doc(db, 'users', user.uid));
+                    if (snap.exists()) {
+                        const data = snap.data();
+                        setUserProfile({
+                            name: data.name || '',
+                            phoneNumber: data.phoneNumber || '',
+                            guardianName: data.guardian || '',
+                            guardianPhone: data.guardianPhone || '',
+                            guardianEmail: data.guardianEmail || undefined
+                        });
+                    }
+                } else {
+                    setUserProfile(null);
+                }
+            });
+        });
+        return () => unsubscribe();
     }, []);
 
     // Save conversation to localStorage whenever messages change
     useEffect(() => {
         localStorage.setItem('gemini-chat-conversation', JSON.stringify(messages));
     }, [messages]);
-
-    // Save profile to localStorage when it changes
-    useEffect(() => {
-        if (userProfile) {
-            localStorage.setItem('gemini-chat-profile', JSON.stringify(userProfile));
-        }
-    }, [userProfile]);
 
     // Depression detection function
     const detectDepressionSignals = (text: string): boolean => {
@@ -465,22 +472,6 @@ Remember: You're having a real-time conversation. Reference previous messages na
         localStorage.removeItem('gemini-chat-conversation');
     };
 
-    const handleProfileSubmit = (e: React.FormEvent) => {
-        e.preventDefault();
-        const formData = new FormData(e.target as HTMLFormElement);
-
-        const profile: UserProfile = {
-            name: formData.get('name') as string,
-            phoneNumber: formData.get('phoneNumber') as string || undefined,
-            guardianName: formData.get('guardianName') as string,
-            guardianPhone: formData.get('guardianPhone') as string,
-            guardianEmail: formData.get('guardianEmail') as string || undefined
-        };
-
-        setUserProfile(profile);
-        setShowProfileSetup(false);
-    };
-
     if (!isOpen) return null;
 
     return (
@@ -534,79 +525,8 @@ Remember: You're having a real-time conversation. Reference previous messages na
 
                     {!isMinimized && (
                         <>
-                            {showProfileSetup ? (
-                                // Profile Setup Form
-                                <div className="p-4 space-y-4 overflow-auto">
-                                    <div className="flex items-center gap-2 text-amber-600 mb-2">
-                                        <AlertTriangle className="w-5 h-5" />
-                                        <h3 className="font-semibold">Emergency Contact Setup</h3>
-                                    </div>
-                                    <p className="text-sm text-gray-600 mb-4">
-                                        For your safety, we need to set up emergency contacts.
-                                        This information will only be used if concerning content is detected.
-                                    </p>
-
-                                    <form onSubmit={handleProfileSubmit} className="space-y-4">
-                                        <div>
-                                            <label className="text-sm font-medium text-gray-700 mb-1 block">Your Name</label>
-                                            <Input
-                                                name="name"
-                                                required
-                                                className="w-full"
-                                                placeholder="Enter your full name"
-                                            />
-                                        </div>
-
-                                        <div>
-                                            <label className="text-sm font-medium text-gray-700 mb-1 block">Your Phone (optional)</label>
-                                            <Input
-                                                name="phoneNumber"
-                                                type="tel"
-                                                className="w-full"
-                                                placeholder="Your phone number"
-                                            />
-                                        </div>
-
-                                        <div>
-                                            <label className="text-sm font-medium text-gray-700 mb-1 block">Guardian's Name</label>
-                                            <Input
-                                                name="guardianName"
-                                                required
-                                                className="w-full"
-                                                placeholder="Guardian's full name"
-                                            />
-                                        </div>
-
-                                        <div>
-                                            <label className="text-sm font-medium text-gray-700 mb-1 block">Guardian's Phone *</label>
-                                            <Input
-                                                name="guardianPhone"
-                                                type="tel"
-                                                required
-                                                className="w-full"
-                                                placeholder="Guardian's phone number"
-                                            />
-                                        </div>
-
-                                        <div>
-                                            <label className="text-sm font-medium text-gray-700 mb-1 block">Guardian's Email (optional)</label>
-                                            <Input
-                                                name="guardianEmail"
-                                                type="email"
-                                                className="w-full"
-                                                placeholder="Guardian's email address"
-                                            />
-                                        </div>
-
-                                        <Button type="submit" className="w-full bg-blue-500 hover:bg-blue-600">
-                                            Save and Continue
-                                        </Button>
-                                    </form>
-                                </div>
-                            ) : (
-                                <>
-                                    {/* Messages */}
-                                    <div className="flex-1 overflow-auto p-4 space-y-4">
+                            {/* Messages */}
+                            <div className="flex-1 overflow-auto p-4 space-y-4">
                                         {messages.length === 0 ? (
                                             <div className="text-center py-8 text-gray-500">
                                                 <MessageCircle className="w-12 h-12 mx-auto mb-3 opacity-50" />
@@ -661,28 +581,26 @@ Remember: You're having a real-time conversation. Reference previous messages na
                                         <div ref={messagesEndRef} />
                                     </div>
 
-                                    {/* Input */}
-                                    <div className="p-4 border-t border-gray-200">
-                                        <div className="flex items-center gap-3">
-                                            <Input
-                                                value={input}
-                                                onChange={(e) => setInput(e.target.value)}
-                                                placeholder="Type your message..."
-                                                className="flex-1 h-11 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:ring-0 transition-colors"
-                                                onKeyDown={handleKeyPress}
-                                                disabled={loading}
-                                            />
-                                            <Button
-                                                onClick={handleSend}
-                                                disabled={loading || !input.trim()}
-                                                className="h-11 px-4 bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white rounded-xl"
-                                            >
-                                                <Send className="w-4 h-4" />
-                                            </Button>
-                                        </div>
-                                    </div>
-                                </>
-                            )}
+                            {/* Input */}
+                            <div className="p-4 border-t border-gray-200">
+                                <div className="flex items-center gap-3">
+                                    <Input
+                                        value={input}
+                                        onChange={(e) => setInput(e.target.value)}
+                                        placeholder="Type your message..."
+                                        className="flex-1 h-11 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:ring-0 transition-colors"
+                                        onKeyDown={handleKeyPress}
+                                        disabled={loading}
+                                    />
+                                    <Button
+                                        onClick={handleSend}
+                                        disabled={loading || !input.trim()}
+                                        className="h-11 px-4 bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white rounded-xl"
+                                    >
+                                        <Send className="w-4 h-4" />
+                                    </Button>
+                                </div>
+                            </div>
                         </>
                     )}
                 </Card>

@@ -9,9 +9,10 @@ import { toast } from "@/hooks/use-toast";
 import { getAuthInstance, getDb } from "@/lib/firebase";
 import { doc, getDoc, updateDoc } from "firebase/firestore";
 import { useNavigate } from "react-router-dom";
-import { FaCamera, FaArrowLeft, FaSave, FaUser, FaIdBadge, FaStethoscope, FaUniversity, FaClock, FaVenusMars } from "react-icons/fa";
+import { FaCamera, FaArrowLeft, FaSave, FaUser, FaIdBadge, FaStethoscope, FaUniversity, FaClock, FaVenusMars, FaClipboardList } from "react-icons/fa";
 import { Textarea } from "@/components/ui/textarea";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { getStudentMedicalReviews, type MedicalReview } from "@/services/bookings";
 
 interface UserProfile {
     name: string;
@@ -78,6 +79,8 @@ const Profile = () => {
     const [uploading, setUploading] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
     const [userId, setUserId] = useState<string | null>(null);
+    const [medicalReviews, setMedicalReviews] = useState<MedicalReview[]>([]);
+    const [loadingReviews, setLoadingReviews] = useState(false);
 
     useEffect(() => {
         const fetchProfile = async () => {
@@ -104,6 +107,19 @@ const Profile = () => {
                         role: "student",
                         photoURL: user.photoURL || undefined
                     });
+                }
+
+                const userRole = docSnap.exists() ? docSnap.data().role : "student";
+                if (userRole === 'student') {
+                    setLoadingReviews(true);
+                    try {
+                        const reviews = await getStudentMedicalReviews(user.uid);
+                        setMedicalReviews(reviews);
+                    } catch (err) {
+                        console.error("Error fetching reviews", err);
+                    } finally {
+                        setLoadingReviews(false);
+                    }
                 }
             } catch (error) {
                 console.error("Error fetching profile:", error);
@@ -383,6 +399,35 @@ const Profile = () => {
                         </CardContent>
                     </Card>
                 </div>
+
+                {profile.role === 'student' && (
+                    <div className="mt-8">
+                        <Card className="shadow-xl border-0 bg-white/80 backdrop-blur">
+                            <CardHeader className="border-b bg-gray-50/50">
+                                <CardTitle className="flex items-center gap-2 text-primary">
+                                    <FaClipboardList /> Medical Reviews (Feedback from Counselors)
+                                </CardTitle>
+                            </CardHeader>
+                            <CardContent className="pt-6 space-y-4 max-h-[400px] overflow-y-auto">
+                                {loadingReviews ? (
+                                    <div className="text-center py-4 text-gray-500">Loading reviews...</div>
+                                ) : medicalReviews.length === 0 ? (
+                                    <div className="text-center py-4 text-gray-500">You don't have any medical reviews yet.</div>
+                                ) : (
+                                    medicalReviews.map((review) => (
+                                        <div key={review.id} className="p-4 bg-gray-50 rounded-lg border border-gray-200">
+                                            <div className="flex justify-between items-start mb-2">
+                                                <span className="font-semibold text-sm text-gray-900">{review.counselorName}</span>
+                                                <span className="text-xs text-gray-500">{new Date(review.date).toLocaleDateString()}</span>
+                                            </div>
+                                            <p className="text-sm text-gray-700 whitespace-pre-wrap">{review.notes}</p>
+                                        </div>
+                                    ))
+                                )}
+                            </CardContent>
+                        </Card>
+                    </div>
+                )}
             </div>
         </div>
     );
