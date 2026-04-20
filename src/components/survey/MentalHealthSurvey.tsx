@@ -52,13 +52,62 @@ export const MentalHealthSurvey: React.FC<Props> = ({ userId, onComplete }) => {
   const handleSubmit = async () => {
     setIsSubmitting(true);
     try {
+      const mental_score = sectionA.reduce((a, b) => a + (b >= 0 ? b : 0), 0) +
+        sectionB.reduce((a, b) => a + (b >= 0 ? b : 0), 0);
+      const stress_score = sectionC.reduce((a, b) => a + b, 0);
+
+      // Fetch user hobbies
+      let hobbies = "";
+      try {
+        const { getDb } = await import("@/lib/firebase");
+        const { doc, getDoc } = await import("firebase/firestore");
+        const db = await getDb();
+        const userDoc = await getDoc(doc(db, "users", userId));
+        if (userDoc.exists()) {
+          hobbies = (userDoc.data() as any).hobbies || "";
+        }
+      } catch (err) {
+        console.warn("Failed to fetch hobbies:", err);
+      }
+
+      // Prediction Call
+      let prediction = null;
+      try {
+        const response = await fetch("http://localhost:8000/predict", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            mental_score,
+            stress_score,
+            sleep_hours: sectionD[0],
+            exercise_days: sectionD[1],
+            screen_time: sectionD[2],
+            lonely: sectionB[3],
+            self_harm: sectionE,
+            hobbies
+          })
+        });
+        if (response.ok) {
+          const resData = await response.json();
+          prediction = {
+            level: resData.level,
+            suggestions: resData.suggestions
+          };
+        }
+      } catch (err) {
+        console.error("FastAPI Backend Error:", err);
+        // Continue saving survey even if prediction fails
+      }
+
       const data: SurveyResponseData = {
         sectionA,
         sectionB,
         sectionC,
         sectionD,
-        sectionE
+        sectionE,
+        prediction: prediction || undefined
       };
+
       await saveSurveyResponse(userId, data);
       setIsSubmitting(false);
       setStep(6); // Success step

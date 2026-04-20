@@ -252,7 +252,7 @@ const PopupChat = ({ isOpen, onClose }: PopupChatProps) => {
             }
         }
 
-        let unsubscribe = () => {};
+        let unsubscribe = () => { };
         getAuthInstance().then((auth) => {
             unsubscribe = onAuthStateChanged(auth, async (user) => {
                 if (user) {
@@ -330,7 +330,7 @@ const PopupChat = ({ isOpen, onClose }: PopupChatProps) => {
     };
 
     const sendToGemini = async (prompt: string): Promise<string> => {
-        const apiKey = "AIzaSyDLQPM-0CH_RdjgQAtf_4v7-e-ddz7LcoU";
+        const apiKey = "AIzaSyBtnikscTcGJi6TWvw64z9fopM2bkyvqdk";
 
         // Enhanced system prompt for mental health support
         const systemPrompt = `You are a compassionate mental wellness assistant designed to help students with their mental health and emotional wellbeing. You should:
@@ -347,7 +347,7 @@ const PopupChat = ({ isOpen, onClose }: PopupChatProps) => {
 Remember: You're having a real-time conversation. Reference previous messages naturally and build rapport. Keep responses helpful but not overly long (2-3 sentences typically).`;
 
         try {
-            const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${apiKey}`, {
+            const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -527,59 +527,59 @@ Remember: You're having a real-time conversation. Reference previous messages na
                         <>
                             {/* Messages */}
                             <div className="flex-1 overflow-auto p-4 space-y-4">
-                                        {messages.length === 0 ? (
-                                            <div className="text-center py-8 text-gray-500">
-                                                <MessageCircle className="w-12 h-12 mx-auto mb-3 opacity-50" />
-                                                <p className="text-sm font-medium">Start a conversation</p>
-                                                <p className="text-xs">I'm here to listen and support you</p>
-                                            </div>
-                                        ) : (
-                                            <>
-                                                {messages.map((message) => (
-                                                    <div key={message.id} className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                                                        <div className={`max-w-[80%] flex gap-2 ${message.role === 'user' ? 'flex-row-reverse' : 'flex-row'}`}>
-                                                            <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${message.role === 'user'
-                                                                ? 'bg-gradient-to-r from-blue-500 to-purple-500 text-white'
-                                                                : 'bg-gradient-to-r from-gray-100 to-gray-200 text-gray-600'
-                                                                }`}>
-                                                                {message.role === 'user' ? <User className="w-4 h-4" /> : <Bot className="w-4 h-4" />}
-                                                            </div>
-                                                            <div className={`px-4 py-2 rounded-2xl ${message.role === 'user'
-                                                                ? 'bg-gradient-to-r from-blue-500 to-purple-500 text-white'
-                                                                : 'bg-gray-100 text-gray-800'
-                                                                }`}>
-                                                                <div className="text-sm whitespace-pre-wrap">{message.content}</div>
-                                                                <div className={`text-xs mt-1 opacity-70 ${message.role === 'user' ? 'text-blue-100' : 'text-gray-500'
-                                                                    }`}>
-                                                                    {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                ))}
-                                                {loading && (
-                                                    <div className="flex justify-start">
-                                                        <div className="flex gap-2">
-                                                            <div className="w-8 h-8 rounded-full bg-gradient-to-r from-gray-100 to-gray-200 text-gray-600 flex items-center justify-center flex-shrink-0">
-                                                                <Bot className="w-4 h-4" />
-                                                            </div>
-                                                            <div className="px-4 py-2 rounded-2xl bg-gray-100 text-gray-800">
-                                                                <div className="flex items-center gap-2">
-                                                                    <div className="flex space-x-1">
-                                                                        <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
-                                                                        <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
-                                                                        <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
-                                                                    </div>
-                                                                    <span className="text-xs text-gray-500">AI is thinking...</span>
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                )}
-                                            </>
-                                        )}
-                                        <div ref={messagesEndRef} />
+                                {messages.length === 0 ? (
+                                    <div className="text-center py-8 text-gray-500">
+                                        <MessageCircle className="w-12 h-12 mx-auto mb-3 opacity-50" />
+                                        <p className="text-sm font-medium">Start a conversation</p>
+                                        <p className="text-xs">I'm here to listen and support you</p>
                                     </div>
+                                ) : (
+                                    <>
+                                        {messages.map((message) => (
+                                            <div key={message.id} className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                                                <div className={`max-w-[80%] flex gap-2 ${message.role === 'user' ? 'flex-row-reverse' : 'flex-row'}`}>
+                                                    <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${message.role === 'user'
+                                                        ? 'bg-gradient-to-r from-blue-500 to-purple-500 text-white'
+                                                        : 'bg-gradient-to-r from-gray-100 to-gray-200 text-gray-600'
+                                                        }`}>
+                                                        {message.role === 'user' ? <User className="w-4 h-4" /> : <Bot className="w-4 h-4" />}
+                                                    </div>
+                                                    <div className={`px-4 py-2 rounded-2xl ${message.role === 'user'
+                                                        ? 'bg-gradient-to-r from-blue-500 to-purple-500 text-white'
+                                                        : 'bg-gray-100 text-gray-800'
+                                                        }`}>
+                                                        <div className="text-sm whitespace-pre-wrap">{message.content}</div>
+                                                        <div className={`text-xs mt-1 opacity-70 ${message.role === 'user' ? 'text-blue-100' : 'text-gray-500'
+                                                            }`}>
+                                                            {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        ))}
+                                        {loading && (
+                                            <div className="flex justify-start">
+                                                <div className="flex gap-2">
+                                                    <div className="w-8 h-8 rounded-full bg-gradient-to-r from-gray-100 to-gray-200 text-gray-600 flex items-center justify-center flex-shrink-0">
+                                                        <Bot className="w-4 h-4" />
+                                                    </div>
+                                                    <div className="px-4 py-2 rounded-2xl bg-gray-100 text-gray-800">
+                                                        <div className="flex items-center gap-2">
+                                                            <div className="flex space-x-1">
+                                                                <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
+                                                                <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
+                                                                <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
+                                                            </div>
+                                                            <span className="text-xs text-gray-500">AI is thinking...</span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        )}
+                                    </>
+                                )}
+                                <div ref={messagesEndRef} />
+                            </div>
 
                             {/* Input */}
                             <div className="p-4 border-t border-gray-200">

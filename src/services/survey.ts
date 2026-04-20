@@ -7,6 +7,10 @@ export interface SurveyResponseData {
   sectionC: number[];
   sectionD: number[];
   sectionE: number;
+  prediction?: {
+    level: string;
+    suggestions: string;
+  };
 }
 
 export const saveSurveyResponse = async (userId: string, data: SurveyResponseData): Promise<void> => {
@@ -26,7 +30,8 @@ export const saveSurveyResponse = async (userId: string, data: SurveyResponseDat
         core_mental_state: phq9_gad7_score,
         behavior: behavior_score,
         stress: stress_score
-      }
+      },
+      prediction: data.prediction || null
     });
     console.log('✅ Survey response saved successfully for user:', userId);
   } catch (error) {

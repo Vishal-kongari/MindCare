@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { getName, clearAuth } from "@/lib/auth";
 import { signOutUser } from "@/services/auth";
 import { useNavigate } from "react-router-dom";
-import { Brain, Calendar, Star, Target, MessageCircle, BookOpen, Users, Smile, Music, Moon, PlayCircle, Book, Clock, User, Activity } from "lucide-react";
+import { Brain, Calendar, Star, Target, MessageCircle, BookOpen, Users, Smile, Music, Moon, PlayCircle, Book, Clock, User, Activity, Sparkles, ArrowRight, Volume2 } from "lucide-react";
 import { FaBrain, FaHeart, FaLeaf, FaFire, FaRocket, FaGem, FaSun, FaMoon, FaStar, FaTrophy, FaGamepad, FaBook, FaUsers, FaComments, FaCalendarAlt, FaChartLine, FaBullseye, FaLightbulb, FaMagic, FaRainbow, FaPalette, FaInfinity } from "react-icons/fa";
 import { GiMeditation, GiFlowerPot, GiButterfly, GiTreeBranch, GiWaterDrop, GiSunrise, GiSunset, GiCrystalBall, GiMagicSwirl, GiStarFormation, GiHeartWings, GiPeaceDove, GiLotus, GiYinYang } from "react-icons/gi";
 import { MdSelfImprovement, MdPsychology, MdNature, MdSpa, MdHealing, MdFavorite, MdEmojiNature, MdAutoAwesome, MdTrendingUp, MdInsights, MdExplore, MdCelebration, MdLocalFlorist, MdWbSunny, MdNightlight } from "react-icons/md";
@@ -40,7 +40,7 @@ import { Separator } from "@/components/ui/separator";
 import { FaPhone, FaEnvelope, FaUniversity } from "react-icons/fa"; // Icons used in dialog
 
 export const StudentDashboard = () => {
-  const MotionCard = motion(Card);
+  const MotionCard = motion.create(Card);
   const { t } = useTranslation();
   const navigate = useNavigate();
   const name = getName();
@@ -52,6 +52,7 @@ export const StudentDashboard = () => {
   const [userId, setUserId] = useState<string | null>(null);
   const [showSurvey, setShowSurvey] = useState(false);
   const [latestSurvey, setLatestSurvey] = useState<SurveyResponseData | null>(null);
+  const [isSpeaking, setIsSpeaking] = useState(false);
 
   const calculateScores = () => {
     if (!latestSurvey) return { mental: 0, stress: 0, lifestyle: 0, overall: 0 };
@@ -79,6 +80,36 @@ export const StudentDashboard = () => {
 
   const surveyScores = calculateScores();
 
+  const fetchLatestSurvey = async () => {
+    const auth = await getAuthInstance();
+    const user = auth.currentUser;
+    if (user) {
+      setUserId(user.uid);
+      const surveyData = await getLatestSurveyResponse(user.uid);
+      setLatestSurvey(surveyData);
+      const required = await checkSurveyRequired(user.uid);
+      setShowSurvey(required);
+    }
+  };
+
+  const toggleSpeak = (text: string) => {
+    const synth = window.speechSynthesis;
+    if (synth.speaking) {
+      synth.cancel();
+      setIsSpeaking(false);
+      return;
+    }
+
+    const cleanText = text.replace(/\*\*/g, '').replace(/[-*#]/g, '');
+    const utter = new SpeechSynthesisUtterance(cleanText);
+    utter.onend = () => setIsSpeaking(false);
+    utter.onerror = () => setIsSpeaking(false);
+    utter.rate = 0.95;
+    utter.pitch = 1.0;
+    synth.speak(utter);
+    setIsSpeaking(true);
+  };
+
   useEffect(() => {
     let unsubBookings: any;
     let unsubTracking: any;
@@ -86,14 +117,8 @@ export const StudentDashboard = () => {
     (async () => {
       const auth = await getAuthInstance();
       const user = auth.currentUser;
-      if (user) {
-        setUserId(user.uid);
-        const required = await checkSurveyRequired(user.uid);
-        setShowSurvey(required);
 
-        const surveyData = await getLatestSurveyResponse(user.uid);
-        setLatestSurvey(surveyData);
-      }
+      await fetchLatestSurvey();
 
       unsubBookings = await listenBookingsForStudent((list) => {
         setBookings(list);
@@ -148,7 +173,10 @@ export const StudentDashboard = () => {
       {showSurvey && userId && (
         <MentalHealthSurvey
           userId={userId}
-          onComplete={() => setShowSurvey(false)}
+          onComplete={async () => {
+            setShowSurvey(false);
+            await fetchLatestSurvey();
+          }}
         />
       )}
       {/* Animated background elements */}
@@ -167,34 +195,27 @@ export const StudentDashboard = () => {
             </div>
             <div>
               <h1 className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">{t('dashboard.student.welcome')}, {name}</h1>
-              <p className="text-sm text-gray-600 flex items-center gap-1">
+              <div className="text-sm text-gray-600 flex items-center gap-1">
                 <GiMeditation className="w-4 h-4 text-purple-500" />
                 {t('dashboard.student.title')}
                 {(() => {
                   const configStatus = getFirebaseConfigStatus();
                   return configStatus.isValid ? (
                     <span className="ml-2 inline-flex items-center gap-1 text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">
-                      <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                      <span className="w-2 h-2 bg-green-500 rounded-full"></span>
                       Firebase OK
                     </span>
                   ) : (
                     <span className="ml-2 inline-flex items-center gap-1 text-xs bg-red-100 text-red-800 px-2 py-1 rounded-full">
-                      <div className="w-2 h-2 bg-red-500 rounded-full"></div>
+                      <span className="w-2 h-2 bg-red-500 rounded-full"></span>
                       Config Issue
                     </span>
                   );
                 })()}
-              </p>
+              </div>
             </div>
           </div>
           <div className="flex items-center gap-3">
-            <Button
-              onClick={() => setShowSurvey(true)}
-              className="bg-gradient-to-r from-teal-500 to-emerald-500 text-white hover:from-teal-600 hover:to-emerald-600 transition-all duration-300 shadow-md hover:shadow-lg transform hover:-translate-y-0.5 hidden sm:flex"
-            >
-              <Activity className="w-4 h-4 mr-2" />
-              Retake Check-in
-            </Button>
             <Button
               onClick={() => navigate('/profile')}
               className="bg-gradient-to-r from-purple-600 to-blue-600 text-white hover:from-purple-700 hover:to-blue-700 transition-all duration-300 shadow-md hover:shadow-lg transform hover:-translate-y-0.5"
@@ -212,7 +233,9 @@ export const StudentDashboard = () => {
           </div>
         </div>
       </header>
-      <motion.main variants={containerVariants} initial="hidden" animate="visible" className="container py-12 grid grid-cols-1 md:grid-cols-3 gap-8 relative z-10">
+
+
+      <motion.main variants={containerVariants} initial="hidden" animate="visible" className="container py-8 grid grid-cols-1 md:grid-cols-3 gap-8 relative z-10">
         <MotionCard variants={itemVariants} className="md:col-span-2 border-0 shadow-2xl bg-white/90 backdrop-blur-sm rounded-3xl relative overflow-hidden">
           <div className="absolute inset-0 bg-gradient-to-br from-purple-100/30 via-pink-100/20 to-blue-100/30"></div>
           <CardHeader className="pb-6 relative z-10">
@@ -328,6 +351,196 @@ export const StudentDashboard = () => {
             </div>
           </CardContent>
         </MotionCard>
+
+        {/* AI Mental Health Insights Section - Relocated Below Scores */}
+        <div className="md:col-span-3">
+          <div className="grid grid-cols-1 md:grid-cols-12 gap-8">
+            {latestSurvey?.prediction ? (
+              <>
+                {/* Left Card: Premium Light Futuristic Status */}
+                <Card className="md:col-span-4 border-0 shadow-2xl rounded-[2.5rem] overflow-hidden relative group bg-white/80 backdrop-blur-xl border border-white/50 text-slate-900">
+                  {/* Soft Background Glows */}
+                  <div className={`absolute inset-0 opacity-10 bg-gradient-to-br transition-all duration-1000 ${
+                    latestSurvey.prediction.level === 'Healthy' ? 'from-emerald-400 via-white to-transparent' :
+                    latestSurvey.prediction.level === 'Mild' ? 'from-amber-400 via-white to-transparent' :
+                    'from-rose-400 via-white to-transparent'
+                  }`}></div>
+                  
+                  {/* Floating Health Doodles Background */}
+                  <div className="absolute inset-0 pointer-events-none overflow-hidden opacity-50 group-hover:opacity-100 transition-opacity duration-1000">
+                    <div className="absolute top-12 left-6 text-emerald-600/10 animate-[bounce_8s_infinite]">
+                      <MdHealing className="w-8 h-8 rotate-12" />
+                    </div>
+                    <div className="absolute bottom-16 right-8 text-amber-500/10 animate-[pulse_6s_infinite]">
+                      <Activity className="w-10 h-10" />
+                    </div>
+                    <div className="absolute top-8 right-10 text-rose-500/10 animate-[bounce_10s_infinite_reverse]">
+                      <FaHeart className="w-10 h-10" />
+                    </div>
+                    <div className="absolute bottom-12 left-8 text-indigo-500/10 animate-[pulse_8s_infinite]">
+                      <MdPsychology className="w-14 h-14 opacity-50" />
+                    </div>
+                    <div className="absolute inset-1/2 -ml-24 -mt-32 text-purple-600/5 animate-[spin_40s_linear_infinite]">
+                      <Brain className="w-48 h-48" />
+                    </div>
+                  </div>
+
+                  <div className="relative z-10 p-8 flex flex-col items-center text-center h-full justify-between">
+                    <div className="w-full">
+                       <div className="flex items-center justify-center gap-2 mb-8">
+                          <span className={`w-2 h-2 rounded-full animate-ping ${
+                            latestSurvey.prediction.level === 'Healthy' ? 'bg-emerald-500' :
+                            latestSurvey.prediction.level === 'Mild' ? 'bg-amber-500' : 'bg-rose-500'
+                          }`}></span>
+                          <p className="text-slate-500 text-[10px] font-black uppercase tracking-[0.3em]">AI Deep-Dive Status</p>
+                       </div>
+
+                       {/* Iconic Representative */}
+                       <div className="relative mb-8 group-hover:scale-110 transition-transform duration-500">
+                          <div className={`w-24 h-24 mx-auto rounded-3xl flex items-center justify-center shadow-lg border border-white ${
+                            latestSurvey.prediction.level === 'Healthy' ? 'bg-emerald-50 text-emerald-600' :
+                            latestSurvey.prediction.level === 'Mild' ? 'bg-amber-50' :
+                            'bg-rose-50 text-rose-600'
+                          } ${latestSurvey.prediction.level === 'Mild' ? 'text-amber-600' : ''}`}>
+                             <MdPsychology className="w-14 h-14" />
+                          </div>
+                          {/* Inner soft glow */}
+                          <div className={`absolute inset-0 blur-2xl opacity-20 -z-10 ${
+                            latestSurvey.prediction.level === 'Healthy' ? 'bg-emerald-400' :
+                            latestSurvey.prediction.level === 'Mild' ? 'bg-amber-400' : 'bg-rose-400'
+                          }`}></div>
+                       </div>
+
+                       <h3 className={`text-5xl font-black mb-4 tracking-tighter transition-colors duration-500 ${
+                         latestSurvey.prediction.level === 'Healthy' ? 'text-emerald-600' :
+                         latestSurvey.prediction.level === 'Mild' ? 'text-amber-600' : 'text-rose-600'
+                       }`}>
+                         {latestSurvey.prediction.level}
+                       </h3>
+                       
+                       <div className="flex gap-2 justify-center mb-8">
+                         {[1, 2, 3, 4, 5].map((s) => (
+                           <FaStar key={s} className={`w-6 h-6 ${s <= (latestSurvey.prediction.level === 'Healthy' ? 5 : latestSurvey.prediction.level === 'Mild' ? 4 : latestSurvey.prediction.level === 'Moderate' ? 3 : 2) ? 'text-yellow-400' : 'text-slate-200'}`} />
+                         ))}
+                       </div>
+                    </div>
+
+                    <div className="w-full space-y-6">
+                       <div className="bg-white/60 backdrop-blur-sm border border-slate-100 px-8 py-5 rounded-[2rem] shadow-sm">
+                          <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1 text-center font-bold">Mental Health Index</p>
+                          <div className="flex items-center justify-center gap-3">
+                             <span className="text-3xl font-black text-slate-900">{latestSurvey.scores?.core_mental_state || '82'}%</span>
+                             <div className="px-3 py-1 rounded-full bg-emerald-50 border border-emerald-100 text-emerald-600 text-[10px] font-black">
+                                OPTIMAL
+                             </div>
+                          </div>
+                       </div>
+                       
+                       <p className="text-slate-500 text-xs font-semibold leading-relaxed px-4">
+                         {latestSurvey.prediction.level === 'Healthy' ? 'Your mind is in a great place! Stay consistent with your habits.' :
+                          latestSurvey.prediction.level === 'Mild' ? 'Doing well, but a few small adjustments could boost your focus.' :
+                          'Attention required. System levels dropping below baseline. Seek support.'}
+                       </p>
+                    </div>
+                  </div>
+                  
+                  {/* Vibrant Top Line */}
+                  <div className={`h-2 w-full absolute top-0 transition-colors duration-1000 ${
+                    latestSurvey.prediction.level === 'Healthy' ? 'bg-emerald-500' :
+                    latestSurvey.prediction.level === 'Mild' ? 'bg-amber-500' : 'bg-rose-500'
+                  }`}></div>
+                </Card>
+
+                {/* Right Card: Personalized Suggestions */}
+                <Card className="md:col-span-8 border-0 shadow-2xl bg-white/95 backdrop-blur-md rounded-3xl overflow-hidden border-l-8 border-indigo-600 p-8 relative">
+                  <div className="absolute inset-0 bg-gradient-to-br from-indigo-50/50 via-white to-purple-50/50 opacity-60"></div>
+                  <div className="relative z-10 space-y-6">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-4">
+                        <div className="p-3 bg-indigo-100 rounded-2xl shadow-inner text-indigo-600">
+                          <Sparkles className="w-6 h-6 border-indigo-600" />
+                        </div>
+                        <div>
+                          <h2 className="text-2xl font-black text-gray-900 tracking-tight">AI Personalized Suggestions</h2>
+                          <p className="text-xs font-bold text-gray-500 uppercase tracking-widest">
+                            Optimized for your interest in: <span className="text-indigo-600">{latestSurvey.responses?.find(r => r.section === 'Hobbies' || r.question?.toLowerCase().includes('hobby'))?.answer || 'your hobbies'}</span>
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Button
+                          onClick={() => toggleSpeak(latestSurvey.prediction.suggestions)}
+                          className={`${isSpeaking ? 'bg-red-100 text-red-600 hover:bg-red-200' : 'bg-indigo-100 text-indigo-600 hover:bg-indigo-200'} p-3 rounded-xl shadow-sm group border border-indigo-200`}
+                          title={isSpeaking ? "Stop listening" : "Listen to suggestions"}
+                        >
+                          {isSpeaking ? <Volume2 className="w-5 h-5 animate-pulse" /> : <Volume2 className="w-5 h-5 group-hover:scale-110 transition-transform" />}
+                        </Button>
+                        <Button
+                          onClick={() => setShowSurvey(true)}
+                          variant="ghost"
+                          className="p-2 hover:bg-indigo-50 rounded-xl group"
+                        >
+                          <Activity className="w-5 h-5 text-indigo-600 group-hover:rotate-12 transition-transform" />
+                        </Button>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {latestSurvey.prediction.suggestions.split('\n')
+                        .filter(l => {
+                          const trimmed = l.trim();
+                          return trimmed.startsWith('-') || trimmed.startsWith('*') || (trimmed.match(/^\d\./));
+                        })
+                        .slice(0, 4)
+                        .map((suggestion, idx) => {
+                          const cleanText = suggestion.replace(/^[-*\d.]\s*/, '').replace(/\*\*/g, '');
+                          return (
+                            <div key={idx} className="flex gap-4 items-center p-5 bg-white shadow-md border border-indigo-100 rounded-2xl hover:bg-indigo-50/50 transition-all transform hover:-translate-y-1">
+                              <div className="w-10 h-10 bg-indigo-600 text-white rounded-xl flex items-center justify-center text-base font-black shrink-0 shadow-lg">
+                                {idx + 1}
+                              </div>
+                              <p className="text-sm font-bold text-gray-800 leading-snug">{cleanText}</p>
+                            </div>
+                          );
+                        })}
+                    </div>
+
+                    <div className="pt-4 flex justify-between items-center">
+
+                      <Button
+                        onClick={() => setShowSurvey(true)}
+                        className="bg-indigo-600 text-white hover:bg-indigo-700 font-bold px-6 py-2 rounded-xl shadow-lg transform hover:-translate-y-0.5 transition-all flex items-center gap-2"
+                      >
+                        <Activity className="w-4 h-4" />
+                        Retake Check-in
+                      </Button>
+                    </div>
+                  </div>
+                </Card>
+              </>
+            ) : (
+              <Card className="md:col-span-12 border-0 shadow-2xl bg-gradient-to-r from-purple-600 to-indigo-600 rounded-3xl p-10 text-white flex flex-col md:flex-row items-center justify-between gap-8 overflow-hidden relative">
+                <div className="absolute top-0 right-0 w-96 h-96 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2 blur-3xl"></div>
+                <div className="relative z-10 flex items-center gap-8">
+                  <div className="w-20 h-20 bg-white/20 rounded-3xl flex items-center justify-center backdrop-blur-xl border border-white/30 rotate-12">
+                    <Brain className="w-10 h-10 text-white" />
+                  </div>
+                  <div className="text-center md:text-left">
+                    <h2 className="text-3xl font-black mb-2 tracking-tight">Unlock Your Wellness Journey</h2>
+                    <p className="text-white/80 font-bold text-lg max-w-xl">Complete your first bi-weekly assessment to get a deep dive into your mental health score and receive AI-curated suggestions.</p>
+                  </div>
+                </div>
+                <Button
+                  onClick={() => setShowSurvey(true)}
+                  className="relative z-10 bg-white text-purple-600 hover:bg-gray-100 font-black h-16 px-10 rounded-2xl shadow-2xl transform hover:scale-105 transition-all text-lg"
+                >
+                  Start Now <ArrowRight className="ml-3 w-6 h-6" />
+                </Button>
+              </Card>
+            )}
+          </div>
+        </div>
+
         <MotionCard variants={itemVariants} className="md:col-span-3 border-0 shadow-2xl bg-white/90 backdrop-blur-sm rounded-3xl relative overflow-hidden">
           <div className="absolute inset-0 bg-gradient-to-br from-purple-100/30 via-pink-100/20 to-blue-100/30"></div>
           <CardHeader className="pb-6 relative z-10">
@@ -474,7 +687,7 @@ export const StudentDashboard = () => {
 };
 
 const LiveSessionsSection = () => {
-  const MotionCard = motion(Card);
+  const MotionCard = motion.create(Card);
   const [counselors, setCounselors] = useState<CounselorProfile[]>([]);
   const [loading, setLoading] = useState(false);
   const [bookingLoading, setBookingLoading] = useState<string | null>(null);
